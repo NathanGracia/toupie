@@ -6,7 +6,7 @@ canvas.height = innerHeight;
 const gravitationalStrenght = 1.00000;
 
 const friction_object = 0.95;
-const friction_edge = 0.50;
+const friction_edge = 0.60;
 const friction_rotation = 0.9998;
 const mouse = {
     x: innerWidth / 2,
@@ -25,7 +25,7 @@ let particles = [];
 
 
 class Toupie {
-    constructor(id, x, y, radius, center) {
+    constructor(id, x, y, radius, center, rotation) {
         this.id = id;
         this.x = x;
         this.y = y;
@@ -39,7 +39,7 @@ class Toupie {
         this.mass = radius;
         this.killed = false
         this.angle = 0;
-        this.rotation = 20; // multiplicateur - donne la vitesse de la rotation.
+        this.rotation = rotation; // multiplicateur - donne la vitesse de la rotation.
         this.speed_malus = 1 // est utilisé pour arreter la toupie
 
         this.alive = true
@@ -136,7 +136,7 @@ class Toupie {
         }
 
 
-        if (this.rotation < 5) {
+        if (this.rotation < 10) {
             //on la tue
             this.alive = false
             //on reduit sa vitesse de ouf
@@ -380,11 +380,11 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 5; i++) {
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth * 5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight * 5 / 6);
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 80, center));
+        toupies.push(new Toupie(i, toupieX, toupieY, randomIntFromRange(40 ,80), center, randomIntFromRange(30 ,80)));
     }
 
 
