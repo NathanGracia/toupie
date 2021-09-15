@@ -91,6 +91,7 @@ function rotate(velocity, angle) {
 }
 
 
+
 // Event Listeners
 addEventListener('mousemove', (event) => {
     mouse.x = event.clientX
@@ -176,15 +177,32 @@ class Toupie {
 
     // affiche le cercle à l'écran
     draw() {
+        c.strokeStyle = '#000000';
+
         c.beginPath();
         c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         c.fillStyle = this.color;
-
         c.globalAlpha = 1;
         c.fill();
-        c.closePath()
-    }
+        c.stroke();
 
+        c.closePath()
+
+
+        c.beginPath();
+        c.lineWidth = 3;
+        c.line
+        c.moveTo(this.x - this.radius*13/16, this.y - this.radius*13/16);
+        c.lineTo(this.x + this.radius*13/16, this.y + this.radius*13/16);
+        c.moveTo(this.x + this.radius*13/16, this.y - this.radius*13/16);
+        c.lineTo(this.x - this.radius*13/16, this.y + this.radius*13/16);
+        c.strokeStyle = '#ffffffff';
+        c.stroke();
+
+    }
+//https://jsfiddle.net/awsumpwner27/k7CVw/
+
+    
     //est executé à chaque frame
     update() {
 
