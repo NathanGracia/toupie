@@ -4,7 +4,7 @@
     <link rel="icon" href="flavicon.png" />
 
     <meta charset="UTF-8" />
-    <title>Orbit</title>
+    <title>Super toupie</title>
     <style>
         body {
             margin: 0;
