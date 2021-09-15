@@ -107,6 +107,53 @@ addEventListener('click', () => {
 });
 
 
+//regarde dans toutes les toupies si deux sont en collision
+function CheckAllToupiesCollisions(toupies){
+    toupies.forEach(toupie1 =>
+        toupies.forEach(toupie2 =>{
+            if(toupie1.id !== toupie2.id){
+                CheckTwoToupiesCollision(toupie1,toupie2);
+
+            }
+        })
+
+    )
+}
+function CheckTwoToupiesCollision(toupie1, toupie2){
+    if (distance(toupie1.x, toupie1.y, toupie2.x, toupie2.y) < toupie2.radius + toupie1.radius) {
+        resolveCollision(toupie1, toupie2);
+        let damagesX = toupie1.velocity.x - toupie2.velocity.x;
+        let damagesY = toupie1.velocity.y - toupie2.velocity.y;
+        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 1000;
+
+        //creation des particules en fonction des degats
+        for (let i = 0; i < damages/3; i++){
+            let radius = randomIntFromRange(2, 8);
+            let ranVelocityX = toupie1.velocity.x+randomIntFromRange(-5,5);
+            let ranVelocityY = toupie1.velocity.y+randomIntFromRange(-5,2);
+            let velocity = {
+                x : ranVelocityX,
+                y: ranVelocityY
+            };
+            particles.push(new Particle(toupie1.x, toupie1.y,radius, toupie1.color, velocity ))
+            let radius2 = randomIntFromRange(1, 4);
+            let ranVelocityX2 = toupie1.velocity.x+randomIntFromRange(-5,5);
+            let ranVelocityY2 = toupie1.velocity.y+randomIntFromRange(-5,2);
+            let velocity2 = {
+                x : ranVelocityX2,
+                y: ranVelocityY2
+            };
+            particles.push(new Particle(toupie1.x, toupie1.y,radius2, toupie1.color, velocity2 ))
+        }
+
+
+
+
+
+    }
+}
+
+
 // Objects
 
 
@@ -127,6 +174,7 @@ class Toupie {
         this.killed = false
     }
 
+    // affiche le cercle à l'écran
     draw() {
         c.beginPath();
         c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
@@ -137,13 +185,14 @@ class Toupie {
         c.closePath()
     }
 
+    //est executé à chaque frame
     update() {
 
-        //prevent dispawn at start
+        //evite un bug de dispawn au debut
         if ((!this.x || !this.y) && !this.killed) {
             init();
         }
-        //following
+        //Suis le centre qui lui est donné
         if (this.x !== this.center.x && this.y !== this.center.y) {
 
             let xDiff = this.center.x - this.x;
@@ -156,6 +205,8 @@ class Toupie {
 
             let xDeplacement = xWanted;
             let yDeplacement = yWanted;
+
+            //rebondis sur les cotés
             if (this.x - this.radius < 0 || this.x + this.radius > innerWidth) {
                 this.velocity.x *= -1 * friction_edge;
 
@@ -168,7 +219,7 @@ class Toupie {
 
 
         }
-        //bounces
+
 
 
         this.x += this.velocity.x;
@@ -183,29 +234,6 @@ class Toupie {
         this.draw()
     }
 }
-function CheckAllToupiesCollisions(toupies){
-    toupies.forEach(toupie1 =>
-        toupies.forEach(toupie2 =>{
-            if(toupie1.id !== toupie2.id){
-                console.log('toto')
-                CheckTwoToupiesCollision(toupie1,toupie2);
-
-            }
-        })
-
-    )
-}
-function CheckTwoToupiesCollision(toupie1, toupie2){
-    if (distance(toupie1.x, toupie1.y, toupie2.x, toupie2.y) < toupie2.radius + toupie1.radius) {
-        resolveCollision(toupie1, toupie2);
-
-
-
-
-
-    }
-}
-
 
 
 //particle
@@ -265,7 +293,28 @@ class Center {
     constructor(X, Y) {
         this.x = X;
         this.y = Y;
+        this.radius = 1200;
 
+        var gradient = c.createRadialGradient(X, Y, 0, X, Y, 800);
+        gradient.addColorStop(0, '#5b0f0f');
+        gradient.addColorStop(1, '#8f1717');
+        this.color = gradient
+
+    }
+    draw() {
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        c.fillStyle = this.color;
+
+        c.globalAlpha = 1;
+
+
+
+        c.fill();
+        c.closePath()
+    }
+    update(){
+        this.draw();
     }
 
 }
@@ -276,7 +325,7 @@ function init()
 
     toupies = [];
 
-    //player will follow mouse's player
+
     center = new Center(innerWidth / 2, innerHeight / 2,);
     for (let i = 0; i<2; i++){
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth * 5 / 6);
@@ -294,18 +343,18 @@ function init()
 // Animation Loop
 function animate() {
     CheckAllToupiesCollisions(toupies);
-
     //loop
     requestAnimationFrame(animate);
     //clear page
     c.clearRect(0, 0, canvas.width, canvas.height);
+    center.update();
 
 
 
 
 
 
-    //update circles
+    //update toupies
     toupies.forEach(toupie => {
 
         toupie.update()
@@ -316,6 +365,8 @@ function animate() {
 
         particle.update()
     });
+
+
 
 
 
