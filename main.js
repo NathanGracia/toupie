@@ -36,7 +36,7 @@ class Toupie {
             x: vX,
             y: vY
         };
-        this.life = this.radius;
+        this.life = this.radius*2;
         this.center = center;
         this.mass = radius;
         this.killed = false
@@ -595,7 +595,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 300, vX, vY));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 50, vX, vY));
     }
     background = new BackGround(center);
 
