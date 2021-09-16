@@ -3,8 +3,9 @@ const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 canvas.width = innerWidth;
 canvas.height = innerHeight;
-const gravitationalStrenght = 1.00000;
 
+const debug = true;
+const gravitationalStrenght = 1.00000;
 const friction_object = 0.95;
 const friction_edge = 0.80;
 const friction_rotation = 0.9998;
@@ -41,13 +42,13 @@ class Toupie {
         this.angle = 0;
         this.rotation = rotation; // multiplicateur - donne la vitesse de la rotation.
         this.speed_malus = 1 // est utilisé pour arreter la toupie
-
+        this.fulldead= false // ATTENTION une toupie peut ne pas etre vivante et ne pas etre full dead. Un genre de mort vivant. C'est la transition entre la vie et la mort. En gros elle est en train de s'arreter
         this.alive = true
     }
 
     // affiche le cercle à l'écran
     draw() {
-        console.log(this.rotation);
+
         //on place le point d'origine du canvas là ou la toupis va spawn
         c.save();
         c.translate(this.x, this.y);
@@ -82,6 +83,30 @@ class Toupie {
         //on replace le point d'origine du canvas a truc normal
         c.restore();
 
+        //text for debug
+        if(debug == true){
+            c.font = '30px Arial';
+            c.fillStyle = "rgba(255, 255, 255, 0.8)";
+            c.textAlign = "center";
+            let strings = [
+                "Velocity x : " + Math.round(this.velocity.x*100)/100,
+                "Velocity y : " + Math.round(this.velocity.y*100)/100,
+                "Rotation  : " + Math.round(this.rotation*100)/100,
+                "Position x : " + Math.round(this.x*100)/100,
+                "Position y : " + Math.round(this.y*100)/100,
+
+            ]
+            let textSpace = 0;
+            strings.forEach(string=>{
+                c.fillText(string, this.x, this.y-this.radius - 15 - textSpace);
+                textSpace += 30
+            })
+        }
+
+
+
+
+
     }
 
 //https://jsfiddle.net/awsumpwner27/k7CVw/
@@ -92,9 +117,9 @@ class Toupie {
 
         //coeficient de ralentissement du à la rotation :
         let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
-        //Suis le centre qui lui est donné
-        if (this.x !== this.center.x && this.y !== this.center.y && this.alive) {
-
+       //si la toupie est encore vivante, elle se déplace normalement
+        if ( this.alive) {
+            //Suis le centre qui lui est donné
             let xDiff = this.center.x - this.x;
             let yDiff = this.center.y - this.y;
             //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
@@ -122,6 +147,22 @@ class Toupie {
 
 
         } else {
+            if(this.fulldead === true){
+                //todo particles od fulldeath
+            }else{
+
+            }//Si elle est mourante, elle se déplace chelou, pour qu'on comprenne qu'elle est morte
+            //on la rapproche du centre
+            let xDiff = this.center.x - this.x;
+            let yDiff = this.center.y - this.y;
+            //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
+            let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
+
+            let xWanted = xDiff / additionDistance;
+            let yWanted = yDiff / additionDistance;
+
+            let xDeplacement = xWanted;
+            let yDeplacement = yWanted;
             //rebondis sur les cotés
             if (this.x - this.radius < 0 || this.x + this.radius > innerWidth) {
                 this.velocity.x *= -1;
@@ -130,8 +171,18 @@ class Toupie {
             if (this.y - this.radius < 0 || this.y + this.radius > innerHeight) {
                 this.velocity.y *= -1;
             }
-            this.velocity.x = this.velocity.x * rotation_slow * this.speed_malus;
-            this.velocity.y = this.velocity.y * rotation_slow * this.speed_malus;
+            if((this.velocity.x + this.velocity.y  ) < 0.000000001 && this.rotation < 0.01){
+                console.log('dying)')
+                this.fulldead = true;
+                this.velocity.x = 0;
+                this.velocity.y = 0;
+                this.rotation = 0
+
+            }else{
+                this.velocity.x = (this.velocity.x * this.speed_malus + xDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus) * rotation_slow * this.speed_malus  ;
+                this.velocity.y = (this.velocity.y * this.speed_malus + yDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus) * rotation_slow * this.speed_malus  ;
+            }
+
 
         }
 
@@ -140,10 +191,12 @@ class Toupie {
             //on la tue
             this.alive = false
             //on reduit sa vitesse de ouf
-            this.speed_malus = 0.98
+            this.speed_malus -= 0.002
 
         }
 
+        console.log('Velocity x : ' + this.velocity.x)
+        console.log('Velocity y : ' + this.velocity.y)
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
@@ -380,7 +433,7 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth * 5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight * 5 / 6);
 
