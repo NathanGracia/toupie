@@ -36,6 +36,7 @@ class Toupie {
             x: vX,
             y: vY
         };
+        this.life = this.radius;
         this.center = center;
         this.mass = radius;
         this.killed = false
@@ -43,6 +44,7 @@ class Toupie {
         this.rotation = rotation; // multiplicateur - donne la vitesse de la rotation.
         this.speed_malus = 1 // est utilisé pour arreter la toupie
         this.fulldead= false // ATTENTION une toupie peut ne pas etre vivante et ne pas etre full dead. Un genre de mort vivant. C'est la transition entre la vie et la mort. En gros elle est en train de s'arreter
+        this.bursted = false;
         this.alive = true
         this.out = false
     }
@@ -93,11 +95,9 @@ class Toupie {
             c.fillStyle = "rgba(255, 255, 255, 0.8)";
             c.textAlign = "center";
             let strings = [
-                "Velocity x : " + Math.round(this.velocity.x*100)/100,
-                "Velocity y : " + Math.round(this.velocity.y*100)/100,
                 "Rotation  : " + Math.round(this.rotation*100)/100,
-                "Position x : " + Math.round(this.x*100)/100,
-                "Position y : " + Math.round(this.y*100)/100,
+                "Life  : " + Math.round(this.life*100)/100,
+
 
             ]
             let textSpace = 0;
@@ -149,10 +149,21 @@ class Toupie {
                 this.velocity.x *=-1
                 this.rotation *= friction_edge;
 
+                let damagesX = this.velocity.x
+                let damages = Math.pow(Math.abs(damagesX), 3) / 5000;
+                this.life -= damages;
+
+
+
+
             }
             if (this.y - this.radius < 0 || this.y + this.radius > innerHeight) {
                 this.velocity.y *=-1
                 this.rotation *= friction_edge;
+
+                let damagesY = this.velocity.y
+                let damages = Math.pow(Math.abs(damagesY), 3) / 5000;
+                this.life -= damages;
             }
 
             this.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus;
@@ -175,10 +186,16 @@ class Toupie {
             let yDeplacement = yWanted;
             //rebondis sur les cotés
             if (this.x - this.radius < 0 || this.x + this.radius > innerWidth) {
+
+
+
                 this.velocity.x *= -1;
 
             }
             if (this.y - this.radius < 0 || this.y + this.radius > innerHeight) {
+
+
+
                 this.velocity.y *= -1;
             }
             if((this.velocity.x + this.velocity.y  ) < 0.000000001 && this.rotation < 0.01){
@@ -204,15 +221,19 @@ class Toupie {
 
         if (this.rotation < 10) {
             //on la tue
-            this.alive = false
+            this.alive = false;
             //on reduit sa vitesse de ouf
 
 
         }
 
         if(this.alive === false){
-            this.speed_malus -= 0.002
+            this.speed_malus -= 0.002;
         }
+        if(this.life <= 0){
+            this.burst()
+        }
+
 
 
 
@@ -221,6 +242,45 @@ class Toupie {
 
 
         this.draw()
+    }
+    burst(){
+
+        //creation des particules en fonction du radius de la toupie
+        for (let i = 0; i < this.radius*5 ; i++) {
+            console.log('aaa')
+            let radius2 = randomFromRange(1, 4);
+            let ranVelocityX2 = randomFromRange(-10, 10);
+            let ranVelocityY2 = randomFromRange(-10, 10);
+            let velocity2 = {
+                x: ranVelocityX2,
+                y: ranVelocityY2
+            };
+
+            particles.push(new Particle(this.x, this.y, radius2, this.color, velocity2))
+            let radius = randomFromRange(2, 6);
+            let ranVelocityX = randomFromRange(-5, 5);
+            let ranVelocityY =  randomFromRange(-5, 5);
+            let velocity = {
+                x: ranVelocityX,
+                y: ranVelocityY
+            };
+            particles.push(new Particle(this.x, this.y, radius, this.color, velocity))
+
+
+            let radius3 = randomFromRange(4, 8);
+            let ranVelocityX3 = randomFromRange(-3, 3);
+            let ranVelocityY3 =  randomFromRange(-3, 3);
+            let velocity3 = {
+                x: ranVelocityX3,
+                y: ranVelocityY3
+            };
+            particles.push(new Particle(this.x, this.y, radius3, this.color, velocity3))
+        }
+        this.bursted = true;
+        this.rotation = 0;
+        this.radius = 0;
+
+
     }
 }
 
@@ -289,6 +349,7 @@ class Center {
             x: 0,
             y: 0
         }
+        this.life = 999999999;
 
         var gradient = c.createRadialGradient(X, Y, 0, X, Y, 800);
         gradient.addColorStop(0, '#4d4d4d');
@@ -347,6 +408,10 @@ function randomIntFromRange(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
+function randomFromRange(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
 //random color in this array
 function randomColor(colors) {
     return colors[Math.floor(Math.random() * colors.length)]
@@ -378,28 +443,20 @@ function resolveCollision(particle, otherParticle) {
         // Store mass in var for better readability in collision equation
         const m1 = particle.mass;
         const m2 = otherParticle.mass;
-        console.log("masse : " + m2 )
+
 
         // Velocity before equation
         const u1 = rotate(particle.velocity, angle);
-        console.log("velocité 1 : " + u1 )
-        console.log( u1 )
-
         const u2 = rotate(otherParticle.velocity, angle);
-        console.log("velocité 2" + u2 )
-        console.log( u2 )
+
         // Velocity after 1d collision equation
         const v1 = {x: u1.x * (m1 - m2) / (m1 + m2) + u2.x * 2 * m2 / (m1 + m2), y: u1.y};
         const v2 = {x: u2.x * (m1 - m2) / (m1 + m2) + u1.x * 2 * m2 / (m1 + m2), y: u2.y};
 
         // Final velocity after rotating axis back to original location
         const vFinal1 = rotate(v1, -angle);
-        console.log("velocité final 1 : " + vFinal1 )
-        console.log( vFinal1 )
-
         const vFinal2 = rotate(v2, -angle);
-        console.log("velocité final 2 : " +vFinal2 )
-        console.log(vFinal2 )
+
 
 
         // Swap particle velocities for realistic bounce effect
@@ -477,21 +534,35 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
         let damagesX = toupie1.velocity.x - toupie2.velocity.x;
         let damagesY = toupie1.velocity.y - toupie2.velocity.y;
-        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 1000;
+        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 10000;
+
+        // donne un bonus à la toupie qui va le plus vite
+        let sumVelocity1 = Math.abs(toupie1.velocity.x) + Math.abs(toupie1.velocity.y)
+        let sumVelocity2 = Math.abs(toupie2.velocity.x) + Math.abs(toupie2.velocity.y)
+        let bonus1 = 1;
+        let bonus2 = 1;
+        if(sumVelocity1 > sumVelocity2){
+            bonus1 = 1.2;
+        }else {
+            bonus2 = 1.2
+        }
+
+        toupie1.life -= damages * bonus1;
+        toupie2.life -= damages * bonus2;
 
         //creation des particules en fonction des degats
-        for (let i = 0; i < damages / 3; i++) {
-            let radius = randomIntFromRange(2, 8);
-            let ranVelocityX = toupie1.velocity.x + randomIntFromRange(-5, 5);
-            let ranVelocityY = toupie1.velocity.y + randomIntFromRange(-5, 2);
+        for (let i = 0; i < damages *5; i++) {
+            let radius = randomFromRange(2, 8);
+            let ranVelocityX = toupie1.velocity.x + randomFromRange(-5, 5);
+            let ranVelocityY = toupie1.velocity.y + randomFromRange(-5, 2);
             let velocity = {
                 x: ranVelocityX,
                 y: ranVelocityY
             };
             particles.push(new Particle(toupie1.x, toupie1.y, radius, toupie1.color, velocity))
-            let radius2 = randomIntFromRange(1, 4);
-            let ranVelocityX2 = toupie1.velocity.x + randomIntFromRange(-5, 5);
-            let ranVelocityY2 = toupie1.velocity.y + randomIntFromRange(-5, 2);
+            let radius2 = randomFromRange(1, 4);
+            let ranVelocityX2 = toupie1.velocity.x + randomFromRange(-5, 5);
+            let ranVelocityY2 = toupie1.velocity.y + randomFromRange(-5, 2);
             let velocity2 = {
                 x: ranVelocityX2,
                 y: ranVelocityY2
@@ -514,13 +585,17 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
+
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
-        let vY = randomIntFromRange(10,20);
-        let vX = randomIntFromRange(10,20);
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 30, vX, vY));
+        let vY = randomIntFromRange(-20,20);
+        let vX = randomIntFromRange(-20,20);
+
+
+
+        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 300, vX, vY));
     }
     background = new BackGround(center);
 
