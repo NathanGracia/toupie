@@ -6,7 +6,7 @@ canvas.height = innerHeight;
 const gravitationalStrenght = 1.00000;
 
 const friction_object = 0.95;
-const friction_edge = 0.60;
+const friction_edge = 0.80;
 const friction_rotation = 0.9998;
 const mouse = {
     x: innerWidth / 2,
@@ -32,8 +32,8 @@ class Toupie {
         this.radius = radius;
         this.color = randomColor(color_planets);
         this.velocity = {
-            x: randomIntFromRange(1, 60),
-            y: randomIntFromRange(1, 60)
+            x: randomIntFromRange(1, 20),
+            y: randomIntFromRange(1, 20)
         };
         this.center = center;
         this.mass = radius;
@@ -380,11 +380,11 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 2; i++) {
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth * 5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight * 5 / 6);
 
-        toupies.push(new Toupie(i, toupieX, toupieY, randomIntFromRange(40 ,80), center, randomIntFromRange(30 ,80)));
+        toupies.push(new Toupie(i, toupieX, toupieY, randomIntFromRange(20 ,40), center, randomIntFromRange(20 ,30)));
     }
 
 
