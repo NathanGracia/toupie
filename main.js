@@ -26,15 +26,15 @@ let particles = [];
 
 
 class Toupie {
-    constructor(id, x, y, radius, center, rotation) {
+    constructor(id, x, y, radius, center, rotation, vX, vY) {
         this.id = id;
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.color = randomColor(color_planets);
         this.velocity = {
-            x: randomIntFromRange(1, 20),
-            y: randomIntFromRange(1, 20)
+            x: vX,
+            y: vY
         };
         this.center = center;
         this.mass = radius;
@@ -44,10 +44,12 @@ class Toupie {
         this.speed_malus = 1 // est utilisé pour arreter la toupie
         this.fulldead= false // ATTENTION une toupie peut ne pas etre vivante et ne pas etre full dead. Un genre de mort vivant. C'est la transition entre la vie et la mort. En gros elle est en train de s'arreter
         this.alive = true
+        this.out = false
     }
 
     // affiche le cercle à l'écran
     draw() {
+
 
         //on place le point d'origine du canvas là ou la toupis va spawn
         c.save();
@@ -60,9 +62,11 @@ class Toupie {
 
 
         c.strokeStyle = '#000000';
+
         //tracage du cercle
         c.beginPath();
         c.arc(0, 0, this.radius, 0, Math.PI * 2, false);
+
         c.fillStyle = this.color;
         c.globalAlpha = 1;
         c.fill();
@@ -84,7 +88,7 @@ class Toupie {
         c.restore();
 
         //text for debug
-        if(debug == true){
+        if(debug === true){
             c.font = '30px Arial';
             c.fillStyle = "rgba(255, 255, 255, 0.8)";
             c.textAlign = "center";
@@ -117,8 +121,17 @@ class Toupie {
 
         //coeficient de ralentissement du à la rotation :
         let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+
+
+        //check si la toupie est en dehors du terrain
+        if(Math.pow((this.x - this.center.x), 2) + Math.pow((this.y - this.center.y), 2) > Math.pow(this.center.radius, 2) && !this.out){
+            //elle meurt
+           this.out = true;
+          console.log('out')
+        }
+
        //si la toupie est encore vivante, elle se déplace normalement
-        if ( this.alive) {
+        if ( this.alive && this.out === false) {
             //Suis le centre qui lui est donné
             let xDiff = this.center.x - this.x;
             let yDiff = this.center.y - this.y;
@@ -147,12 +160,9 @@ class Toupie {
 
 
         } else {
-            if(this.fulldead === true){
-                //todo particles od fulldeath
-            }else{
+           //Si elle est mourante, elle se déplace chelou, pour qu'on comprenne qu'elle est morte
+            //on la rapproche du centre si elle est pas out
 
-            }//Si elle est mourante, elle se déplace chelou, pour qu'on comprenne qu'elle est morte
-            //on la rapproche du centre
             let xDiff = this.center.x - this.x;
             let yDiff = this.center.y - this.y;
             //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
@@ -172,7 +182,7 @@ class Toupie {
                 this.velocity.y *= -1;
             }
             if((this.velocity.x + this.velocity.y  ) < 0.000000001 && this.rotation < 0.01){
-                console.log('dying)')
+
                 this.fulldead = true;
                 this.velocity.x = 0;
                 this.velocity.y = 0;
@@ -185,18 +195,26 @@ class Toupie {
 
 
         }
+        if(this.out){
+            this.speed_malus -= 0.010
+            this.velocity.x = (this.velocity.x * this.speed_malus ) * rotation_slow * this.speed_malus  ;
+            this.velocity.y = (this.velocity.y * this.speed_malus ) * rotation_slow * this.speed_malus  ;
+        }
 
 
         if (this.rotation < 10) {
             //on la tue
             this.alive = false
             //on reduit sa vitesse de ouf
-            this.speed_malus -= 0.002
+
 
         }
 
-        console.log('Velocity x : ' + this.velocity.x)
-        console.log('Velocity y : ' + this.velocity.y)
+        if(this.alive === false){
+            this.speed_malus -= 0.002
+        }
+
+
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
@@ -265,11 +283,16 @@ class Center {
     constructor(X, Y) {
         this.x = X;
         this.y = Y;
-        this.radius = 1200;
+        this.radius = 800;
+        this.mass = 99999999999999999
+        this.velocity = {
+            x: 0,
+            y: 0
+        }
 
         var gradient = c.createRadialGradient(X, Y, 0, X, Y, 800);
-        gradient.addColorStop(0, '#5b0f0f');
-        gradient.addColorStop(1, '#8f1717');
+        gradient.addColorStop(0, '#4d4d4d');
+        gradient.addColorStop(1, '#707070');
         this.color = gradient
 
     }
@@ -290,6 +313,32 @@ class Center {
         this.draw();
     }
 
+}
+class BackGround{
+    constructor( center) {
+        this.x = center.x;
+        this.y = center.y;
+        this.radius = 1200;
+        var gradient = c.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        gradient.addColorStop(0, '#5b0f0f');
+        gradient.addColorStop(1, '#8f1717');
+        this.color = gradient
+    }
+    draw() {
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        c.fillStyle = this.color;
+
+        c.globalAlpha = 1;
+
+
+        c.fill();
+        c.closePath()
+    }
+
+    update() {
+        this.draw();
+    }
 }
 
 //tools
@@ -313,6 +362,7 @@ function distance(x1, y1, x2, y2) {
 
 // Newton's equation to resolve a collision
 function resolveCollision(particle, otherParticle) {
+    console.log('Resolve collision')
     const xVelocityDiff = particle.velocity.x - otherParticle.velocity.x;
     const yVelocityDiff = particle.velocity.y - otherParticle.velocity.y;
 
@@ -328,28 +378,51 @@ function resolveCollision(particle, otherParticle) {
         // Store mass in var for better readability in collision equation
         const m1 = particle.mass;
         const m2 = otherParticle.mass;
+        console.log("masse : " + m2 )
 
         // Velocity before equation
         const u1 = rotate(particle.velocity, angle);
-        const u2 = rotate(otherParticle.velocity, angle);
+        console.log("velocité 1 : " + u1 )
+        console.log( u1 )
 
+        const u2 = rotate(otherParticle.velocity, angle);
+        console.log("velocité 2" + u2 )
+        console.log( u2 )
         // Velocity after 1d collision equation
         const v1 = {x: u1.x * (m1 - m2) / (m1 + m2) + u2.x * 2 * m2 / (m1 + m2), y: u1.y};
         const v2 = {x: u2.x * (m1 - m2) / (m1 + m2) + u1.x * 2 * m2 / (m1 + m2), y: u2.y};
 
         // Final velocity after rotating axis back to original location
         const vFinal1 = rotate(v1, -angle);
+        console.log("velocité final 1 : " + vFinal1 )
+        console.log( vFinal1 )
+
         const vFinal2 = rotate(v2, -angle);
+        console.log("velocité final 2 : " +vFinal2 )
+        console.log(vFinal2 )
+
 
         // Swap particle velocities for realistic bounce effect
         particle.velocity.x = vFinal1.x * friction_object;
         particle.velocity.y = vFinal1.y * friction_object;
+        console.log(particle.velocity )
 
         otherParticle.velocity.x = vFinal2.x * friction_object;
         otherParticle.velocity.y = vFinal2.y * friction_object;
+
     }
 }
 
+function checkColisionToupieCenter(toupie, center){
+
+    if(  distance(toupie.x, toupie.y, center.x, center.y) < toupie.radius + center.radius){
+
+        resolveCollision(toupie, center)
+        //reset velocité du center parceque il a modifié lors du resolve colision alros qu'il faudrai pas
+        center.velocity.x = 0;
+        center.velocity.y = 0;
+    }
+}
 // used in resolveCollision
 function rotate(velocity, angle) {
     const rotatedVelocities = {
@@ -379,13 +452,19 @@ addEventListener('click', () => {
 
 //regarde dans toutes les toupies si deux sont en collision
 function CheckAllToupiesCollisions(toupies) {
-    toupies.forEach(toupie1 =>
-        toupies.forEach(toupie2 => {
-            if (toupie1.id !== toupie2.id) {
-                CheckTwoToupiesCollision(toupie1, toupie2);
-
+    toupies.forEach(toupie1 =>{
+            //si la toupie est out, on check qu'elle ne puisse pas revenir au centre
+           if(toupie1.out){
+                checkColisionToupieCenter(toupie1, toupie1.center)
             }
-        })
+                toupies.forEach(toupie2 => {
+                    if (toupie1.id !== toupie2.id) {
+                        CheckTwoToupiesCollision(toupie1, toupie2);
+
+                    }
+                })
+    }
+
     )
 }
 
@@ -425,7 +504,9 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 }
 
 
+
 let toupies = [];
+let background;
 
 function init() {
 
@@ -434,11 +515,14 @@ function init() {
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
     for (let i = 0; i < 3; i++) {
-        let toupieX = randomIntFromRange(innerWidth / 6, innerWidth * 5 / 6);
-        let toupieY = randomIntFromRange(innerHeight / 6, innerHeight * 5 / 6);
+        let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
+        let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
+        let vY = randomIntFromRange(10,20);
+        let vX = randomIntFromRange(10,20);
 
-        toupies.push(new Toupie(i, toupieX, toupieY, randomIntFromRange(20 ,40), center, randomIntFromRange(20 ,30)));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 30, vX, vY));
     }
+    background = new BackGround(center);
 
 
 }
@@ -450,6 +534,8 @@ function animate() {
     requestAnimationFrame(animate);
     //clear page
     c.clearRect(0, 0, canvas.width, canvas.height);
+    //update du center de l'arenne et du background
+    background.update();
     center.update();
 
 
