@@ -411,6 +411,12 @@ function resolveCollision(particle, otherParticle) {
 
 
 
+        //Add rotation bonus when they contact
+        if(particle.alice || otherParticle.alive){
+            vFinal1.x *= 3;
+            vFinal1.y *= 3;
+        }
+
         // Swap particle velocities for realistic bounce effect
         particle.velocity.x = vFinal1.x * friction_object;
         particle.velocity.y = vFinal1.y * friction_object;
