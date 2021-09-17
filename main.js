@@ -35,6 +35,7 @@ class Toupie {
         this.radius = radius; // Rayon de la toupie
         this.color = color; // Couleur du fond de la toupie
         this.velocity = velocity;
+
         this.life = this.radius*2; // si les points vie tombe à 0, la toupie burst
         this.center = center; // Centre du canvas, là où elles seront attirées
         this.mass = radius; // utilisé dans le calcul des collision Newton
@@ -45,7 +46,9 @@ class Toupie {
         this.bursted = false; // True lorsque la toupie n'a plus de point de vie
         this.alive = true; // False lorsqu'elle n'a plus de rotation. Alors il y a un speed malus et apres quelques frame elle passe en fulldead
         this.out = false // True lorsqu'elle est en dehors du stadium
+
         this.category = category;
+
     }
 
     // affiche la toupie à l'écran
@@ -66,8 +69,6 @@ class Toupie {
     //est executé à chaque frame
     update() {
 
-        //coeficient de ralentissement du à la rotation :
-
 
 
         //check si la toupie est en dehors du terrain
@@ -78,9 +79,11 @@ class Toupie {
             this.velocity.x = (this.velocity.x * this.speed_malus ) * rotation_slow * this.speed_malus  ;
             this.velocity.y = (this.velocity.y * this.speed_malus ) * rotation_slow * this.speed_malus  ;
         }
+
         if(!this.out){
             moove(this)
         }
+
        //si la toupie est encore vivante, elle se déplace normalement
         if (!this.alive ) {
                 ultraSlowToupie(this)
@@ -95,11 +98,12 @@ class Toupie {
         if(this.life <= 0){
             this.burst()
         }
-
+     
         this.x += this.velocity.x;
         this.y += this.velocity.y;
 
-        this.draw()
+        this.draw();
+
     }
     burst(){
 
@@ -340,6 +344,7 @@ function resolveCollision(particle, otherParticle) {
         particle.velocity.x = vFinal1.x * friction_object;
         particle.velocity.y = vFinal1.y * friction_object;
 
+
         otherParticle.velocity.x = vFinal2.x * friction_object;
         otherParticle.velocity.y = vFinal2.y * friction_object;
 
@@ -544,10 +549,12 @@ function moove(toupie){
 
 }
 // Fait suivre un point à un element deplacable
+
 function attackMovement(toupie, center) {
 
     let xDiff = center.x - toupie.x;
     let yDiff = center.y - toupie.y;
+
     //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
     let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
 
@@ -557,10 +564,12 @@ function attackMovement(toupie, center) {
     let xDeplacement = xWanted;
     let yDeplacement = yWanted;
 
+
     let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
 
     toupie.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
     toupie.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
+
 }
 
 // La toupie sera repoussé par les bords
@@ -601,12 +610,13 @@ function init() {
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
 
-        let vY = randomIntFromRange(-20,20);
-        let vX = randomIntFromRange(-20,20);
+        let VelocityX = randomIntFromRange(-20,20);
+        let VelocityY = randomIntFromRange(-20,20);
         let velocity = {
-            x: vX,
-            y: vY
-        }
+            x: VelocityX,
+            y: VelocityY
+        };
+
 
 
 
