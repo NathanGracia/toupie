@@ -1,245 +1,102 @@
-//init consts
+//######################################### Initialisation du canvas ##################################################
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
+// ######################################## Config generale ###########################################################
 const debug = true;
-const gravitationalStrenght = 1.00000;
-const friction_object = 0.95;
-const friction_edge = 0.80;
-const friction_rotation = 0.9998;
+const color_toupies = ['#A57BEB', '#67D972', '#FF5A56', '#F5B841', '#75E0D2'];
 const mouse = {
     x: innerWidth / 2,
     y: innerHeight / 2
 };
-const color_planets = ['#A57BEB', '#67D972', '#FF5A56', '#F5B841', '#75E0D2'];
-const color_enemies = ['#ba1100', '#c01017', '#be2a30', '#F11B00'];
 
-let score = 0;
-let bestScore = 0;
-let circles = [];
+// ######################################## config physique ###########################################################
+const gravitationalStrenght = 1.00000;
+const friction_object = 0.95;
+const friction_edge = 0.80;
+const friction_rotation = 0.9998;
+
+//######################################### Iitialisation de certains tableaux ###################################################
 let particles = [];
+let toupies = [];
+let background;
 
 
-// Objects
 
 
+//######################################### Entités ###################################################
 class Toupie {
-    constructor(id, x, y, radius, center, rotation, vX, vY) {
+    constructor(id, x, y, radius,color, center, rotation, velocity) {
         this.id = id;
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = randomColor(color_planets);
-        this.velocity = {
-            x: vX,
-            y: vY
-        };
-        this.life = this.radius*2;
-        this.center = center;
-        this.mass = radius;
-        this.killed = false
-        this.angle = 0;
-        this.rotation = rotation; // multiplicateur - donne la vitesse de la rotation.
-        this.speed_malus = 1 // est utilisé pour arreter la toupie
-        this.fulldead= false // ATTENTION une toupie peut ne pas etre vivante et ne pas etre full dead. Un genre de mort vivant. C'est la transition entre la vie et la mort. En gros elle est en train de s'arreter
-        this.bursted = false;
-        this.alive = true
-        this.out = false
+        this.x = x; // position x
+        this.y = y; // position y
+        this.radius = radius; // Rayon de la toupie
+        this.color = color; // Couleur du fond de la toupie
+        this.velocity = velocity;
+        this.life = this.radius*2; // si les points vie tombe à 0, la toupie burst
+        this.center = center; // Centre du canvas, là où elles seront attirées
+        this.mass = radius; // utilisé dans le calcul des collision Newton
+        this.angle = 0; // Rotation de la toupie actuelle
+        this.rotation = rotation; // Vitesse de la rotation.
+        this.speed_malus = 1 // Est utilisé pour arreter la toupie lorsqu'elle tombe
+        this.fulldead= false // True lorsque la toupie est à l'arret complet.
+        this.bursted = false; // True lorsque la toupie n'a plus de point de vie
+        this.alive = true; // False lorsqu'elle n'a plus de rotation. Alors il y a un speed malus et apres quelques frame elle passe en fulldead
+        this.out = false // True lorsqu'elle est en dehors du stadium
     }
 
-    // affiche le cercle à l'écran
+    // affiche la toupie à l'écran
     draw() {
 
+        drawToupie(this);
 
-        //on place le point d'origine du canvas là ou la toupis va spawn
-        c.save();
-        c.translate(this.x, this.y);
-        //on tourne avec l'angle
-        c.rotate(this.angle * this.rotation * Math.PI / 180);
-        this.angle += 1;
-        this.rotation *= friction_rotation * this.speed_malus;
-        //si la rotation est inferieur à 1, alors la toupie est full dead
-
-
-        c.strokeStyle = '#000000';
-
-        //tracage du cercle
-        c.beginPath();
-        c.arc(0, 0, this.radius, 0, Math.PI * 2, false);
-
-        c.fillStyle = this.color;
-        c.globalAlpha = 1;
-        c.fill();
-        c.stroke();
-        c.closePath()
-
-
-        //tracage des pics
-        c.beginPath();
-        c.lineWidth = 3;
-        c.line
-        c.moveTo(-this.radius * 13 / 16, -this.radius * 13 / 16);
-        c.lineTo(+this.radius * 13 / 16, +this.radius * 13 / 16);
-        c.moveTo(+this.radius * 13 / 16, -this.radius * 13 / 16);
-        c.lineTo(-this.radius * 13 / 16, +this.radius * 13 / 16);
-        c.strokeStyle = '#ffffffff';
-        c.stroke();
-        //on replace le point d'origine du canvas a truc normal
-        c.restore();
-
-        //text for debug
+        //Affiche du text au dessus de la souris (en debug)
         if(debug === true){
-            c.font = '30px Arial';
-            c.fillStyle = "rgba(255, 255, 255, 0.8)";
-            c.textAlign = "center";
-            let strings = [
+            showDebugToupie([
                 "Rotation  : " + Math.round(this.rotation*100)/100,
                 "Life  : " + Math.round(this.life*100)/100,
-
-
-            ]
-            let textSpace = 0;
-            strings.forEach(string=>{
-                c.fillText(string, this.x, this.y-this.radius - 15 - textSpace);
-                textSpace += 30
-            })
+            ], this);
         }
 
-
-
-
-
     }
-
-//https://jsfiddle.net/awsumpwner27/k7CVw/
-
 
     //est executé à chaque frame
     update() {
 
         //coeficient de ralentissement du à la rotation :
-        let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+
 
 
         //check si la toupie est en dehors du terrain
-        if(Math.pow((this.x - this.center.x), 2) + Math.pow((this.y - this.center.y), 2) > Math.pow(this.center.radius, 2) && !this.out){
-            //elle meurt
-           this.out = true;
-          console.log('out')
-        }
-
-       //si la toupie est encore vivante, elle se déplace normalement
-        if ( this.alive && this.out === false) {
-            //Suis le centre qui lui est donné
-            let xDiff = this.center.x - this.x;
-            let yDiff = this.center.y - this.y;
-            //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
-            let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
-
-            let xWanted = xDiff / additionDistance;
-            let yWanted = yDiff / additionDistance;
-
-            let xDeplacement = xWanted;
-            let yDeplacement = yWanted;
-
-            //rebondis sur les cotés
-            if (this.x - this.radius < 0 || this.x + this.radius > innerWidth) {
-                this.velocity.x *=-1
-                this.rotation *= friction_edge;
-
-                let damagesX = this.velocity.x
-                let damages = Math.pow(Math.abs(damagesX), 3) / 5000;
-                this.life -= damages;
-
-
-
-
-            }
-            if (this.y - this.radius < 0 || this.y + this.radius > innerHeight) {
-                this.velocity.y *=-1
-                this.rotation *= friction_edge;
-
-                let damagesY = this.velocity.y
-                let damages = Math.pow(Math.abs(damagesY), 3) / 5000;
-                this.life -= damages;
-            }
-
-            this.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus;
-            this.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus;
-
-
-        } else {
-           //Si elle est mourante, elle se déplace chelou, pour qu'on comprenne qu'elle est morte
-            //on la rapproche du centre si elle est pas out
-
-            let xDiff = this.center.x - this.x;
-            let yDiff = this.center.y - this.y;
-            //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
-            let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
-
-            let xWanted = xDiff / additionDistance;
-            let yWanted = yDiff / additionDistance;
-
-            let xDeplacement = xWanted;
-            let yDeplacement = yWanted;
-            //rebondis sur les cotés
-            if (this.x - this.radius < 0 || this.x + this.radius > innerWidth) {
-
-
-
-                this.velocity.x *= -1;
-
-            }
-            if (this.y - this.radius < 0 || this.y + this.radius > innerHeight) {
-
-
-
-                this.velocity.y *= -1;
-            }
-            if((this.velocity.x + this.velocity.y  ) < 0.000000001 && this.rotation < 0.01){
-
-                this.fulldead = true;
-                this.velocity.x = 0;
-                this.velocity.y = 0;
-                this.rotation = 0
-
-            }else{
-                this.velocity.x = (this.velocity.x * this.speed_malus + xDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus) * rotation_slow * this.speed_malus  ;
-                this.velocity.y = (this.velocity.y * this.speed_malus + yDeplacement / gravitationalStrenght * rotation_slow * this.speed_malus) * rotation_slow * this.speed_malus  ;
-            }
-
-
-        }
-        if(this.out){
+        if(checkIfIsInCircle(toupie, toupie.center)){
+            this.out = true;
             this.speed_malus -= 0.010
+            let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
             this.velocity.x = (this.velocity.x * this.speed_malus ) * rotation_slow * this.speed_malus  ;
             this.velocity.y = (this.velocity.y * this.speed_malus ) * rotation_slow * this.speed_malus  ;
         }
-
+        if(!this.out){
+            followPoint(this, this.center)
+        }
+       //si la toupie est encore vivante, elle se déplace normalement
+        if (!this.alive ) {
+                ultraSlowToupie(this)
+        }
+        bounceOnEdge(this)
 
         if (this.rotation < 10) {
-            //on la tue
-            this.alive = false;
-            //on reduit sa vitesse de ouf
-
-
-        }
-
-        if(this.alive === false){
             this.speed_malus -= 0.002;
+            this.alive = false;
         }
+
         if(this.life <= 0){
             this.burst()
         }
 
-
-
-
         this.x += this.velocity.x;
         this.y += this.velocity.y;
-
 
         this.draw()
     }
@@ -255,8 +112,8 @@ class Toupie {
                 x: ranVelocityX2,
                 y: ranVelocityY2
             };
-
             particles.push(new Particle(this.x, this.y, radius2, this.color, velocity2))
+
             let radius = randomFromRange(2, 6);
             let ranVelocityX = randomFromRange(-5, 5);
             let ranVelocityY =  randomFromRange(-5, 5);
@@ -284,8 +141,6 @@ class Toupie {
     }
 }
 
-
-//particle
 class Particle {
     constructor(x, y, radius, color, velocity) {
         this.x = x;
@@ -336,9 +191,6 @@ class Particle {
 
 }
 
-// Implementation
-
-
 class Center {
     constructor(X, Y) {
         this.x = X;
@@ -375,6 +227,7 @@ class Center {
     }
 
 }
+
 class BackGround{
     constructor( center) {
         this.x = center.x;
@@ -402,22 +255,46 @@ class BackGround{
     }
 }
 
-//tools
-// random int from min and max
+//######################################### Event listeners ###################################################
+// Traque la position de la souris
+addEventListener('mousemove', (event) => {
+    mouse.x = event.clientX
+    mouse.y = event.clientY
+});
+
+// Ajuste la taille du canvas si la fenêtre est redimensionné
+addEventListener('resize', () => {
+    canvas.width = innerWidth
+    canvas.height = innerHeight
+
+    init()
+});
+
+//######################################### Iitialisation du canvas ###################################################
+// Traque les clics de l'utilisateur
+addEventListener('click', () => {
+    init()
+});
+
+
+//######################################### Outils ###################################################
+
+// Génere un int random entre min et max
 function randomIntFromRange(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
+// Génere un nombre décimal random entre min et max
 function randomFromRange(min, max) {
     return Math.random() * (max - min) + min;
 }
 
-//random color in this array
+//Sors une couleur random d'un tableau de couleur
 function randomColor(colors) {
     return colors[Math.floor(Math.random() * colors.length)]
 }
 
-//give distance between 2 points
+//Donne la distance entre deux points
 function distance(x1, y1, x2, y2) {
     const xDist = x2 - x1;
     const yDist = y2 - y1;
@@ -427,7 +304,6 @@ function distance(x1, y1, x2, y2) {
 
 // Newton's equation to resolve a collision
 function resolveCollision(particle, otherParticle) {
-    console.log('Resolve collision')
     const xVelocityDiff = particle.velocity.x - otherParticle.velocity.x;
     const yVelocityDiff = particle.velocity.y - otherParticle.velocity.y;
 
@@ -470,7 +346,7 @@ function resolveCollision(particle, otherParticle) {
     }
 }
 
-function checkColisionToupieCenter(toupie, center){
+function checkCollisionToupieCenter(toupie, center){
 
     if(  distance(toupie.x, toupie.y, center.x, center.y) < toupie.radius + center.radius){
 
@@ -480,6 +356,7 @@ function checkColisionToupieCenter(toupie, center){
         center.velocity.y = 0;
     }
 }
+
 // used in resolveCollision
 function rotate(velocity, angle) {
     const rotatedVelocities = {
@@ -490,41 +367,22 @@ function rotate(velocity, angle) {
     return rotatedVelocities;
 }
 
-
-// Event Listeners
-addEventListener('mousemove', (event) => {
-    mouse.x = event.clientX
-    mouse.y = event.clientY
-});
-addEventListener('resize', () => {
-    canvas.width = innerWidth
-    canvas.height = innerHeight
-
-    init()
-});
-addEventListener('click', () => {
-    init()
-});
-
-
 //regarde dans toutes les toupies si deux sont en collision
 function CheckAllToupiesCollisions(toupies) {
     toupies.forEach(toupie1 =>{
-            //si la toupie est out, on check qu'elle ne puisse pas revenir au centre
-           if(toupie1.out){
-                checkColisionToupieCenter(toupie1, toupie1.center)
+        //si la toupie est out, on check qu'elle ne puisse pas revenir au centre
+        if(toupie1.out){
+            checkCollisionToupieCenter(toupie1, toupie1.center)
+        }
+        toupies.forEach(toupie2 => {
+            if (toupie1.id !== toupie2.id) {
+                CheckTwoToupiesCollision(toupie1, toupie2);
             }
-                toupies.forEach(toupie2 => {
-                    if (toupie1.id !== toupie2.id) {
-                        CheckTwoToupiesCollision(toupie1, toupie2);
-
-                    }
-                })
-    }
-
-    )
+        })
+    })
 }
 
+//regarde si il y a collision entre deux toupies
 function CheckTwoToupiesCollision(toupie1, toupie2) {
     if (distance(toupie1.x, toupie1.y, toupie2.x, toupie2.y) < toupie2.radius + toupie1.radius) {
         resolveCollision(toupie1, toupie2);
@@ -573,12 +431,129 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
     }
 }
+//dessine une toupie
+function drawToupie(toupie) {
+    //sauvegarde de l'état du canvas avant de le faire tourner
+    c.save();
+    // Place l e point d'origine du canvas au centre de la toupie
+    c.translate(toupie.x, toupie.y);
+
+    //on tourne avec l'angle
+    c.rotate(toupie.angle * toupie.rotation * Math.PI / 180);
+    toupie.angle += 1;
+    toupie.rotation *= friction_rotation * toupie.speed_malus;
+
+    //tracage du cercle
+    c.strokeStyle = '#000000';
+    c.beginPath();
+    c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
+    c.fillStyle = toupie.color;
+    c.globalAlpha = 1;
+    c.fill();
+    c.stroke();
+    c.closePath()
 
 
+    //tracage des pics
+    c.beginPath();
+    c.lineWidth = 3;
+    c.line
+    c.moveTo(-toupie.radius * 13 / 16, -toupie.radius * 13 / 16);
+    c.lineTo(+toupie.radius * 13 / 16, +toupie.radius * 13 / 16);
+    c.moveTo(+toupie.radius * 13 / 16, -toupie.radius * 13 / 16);
+    c.lineTo(-toupie.radius * 13 / 16, +toupie.radius * 13 / 16);
+    c.strokeStyle = '#ffffffff';
+    c.stroke();
 
-let toupies = [];
-let background;
+    //on replace le point d'origine du canvas a truc normal
+    c.restore();
+}
 
+//Affiche le debug au dessus d'une toupie
+function showDebugToupie(strings, toupie){
+    c.font = '30px Arial';
+    c.fillStyle = "rgba(255, 255, 255, 0.8)";
+    c.textAlign = "center";
+
+    let textSpace = 0;
+    strings.forEach(string=>{
+        c.fillText(string, toupie.x, toupie.y-toupie.radius - 15 - textSpace);
+        textSpace += 30
+    })
+}
+
+// Check si un point est dans le cercle
+function checkIfIsInCircle(point, circle) {
+    if(Math.pow((point.x - circle.x), 2) + Math.pow((point.y - circle.y), 2) > Math.pow(circle.radius, 2) && !point.out){
+        return true
+    }
+}
+
+//Lorsque qu'uen toupie a une rotaiton trop basse, sa velocité diminue tres vite
+function ultraSlowToupie(toupie) {
+
+    if(toupie.rotation < 0.01){
+        //lorsque la toupie est trop lente, on l'immobilise
+        toupie.fulldead = true;
+        toupie.velocity.x = 0;
+        toupie.velocity.y = 0;
+        toupie.rotation = 0
+
+    }else {
+        //ralentie rapidement la toupie
+        toupie.velocity.x = (toupie.velocity.x * toupie.speed_malus + xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
+        toupie.velocity.y = (toupie.velocity.y * toupie.speed_malus + yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
+    }
+
+}
+
+//fait rebondir sur les bords de l'écran
+function bounceOnEdge(moovable) {
+
+    if (moovable.x - moovable.radius < 0 || moovable.x + moovable.radius > innerWidth) {
+        moovable.velocity.x *=-1
+        moovable.rotation *= friction_edge;
+
+        let damagesX = moovable.velocity.x
+        let damages = Math.pow(Math.abs(damagesX), 3) / 5000;
+        moovable.life -= damages;
+    }
+
+    if (moovable.y - moovable.radius < 0 || moovable.y + moovable.radius > innerHeight) {
+        moovable.velocity.y *=-1
+        moovable.rotation *= friction_edge;
+
+        let damagesY = moovable.velocity.y
+        let damages = Math.pow(Math.abs(damagesY), 3) / 5000;
+        moovable.life -= damages;
+    }
+
+}
+
+// Fait suivre un point à un element deplacable
+function followPoint(moovable, point) {
+    let xDiff = point.x - moovable.x;
+    let yDiff = point.y - moovable.y;
+    //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
+    let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
+
+    let xWanted = xDiff / additionDistance;
+    let yWanted = yDiff / additionDistance;
+
+    let xDeplacement = xWanted;
+    let yDeplacement = yWanted;
+
+    let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+
+    moovable.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
+    moovable.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
+}
+
+
+//######################################### Fonctions moteur canvas ###################################################
+
+
+// lance la partie
 function init() {
 
     toupies = [];
@@ -592,17 +567,21 @@ function init() {
 
         let vY = randomIntFromRange(-20,20);
         let vX = randomIntFromRange(-20,20);
+        let velocity = {
+            x: vX,
+            y: vY
+        }
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30, center, 50, vX, vY));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity));
     }
     background = new BackGround(center);
 
 
 }
 
-// Animation Loop
+// Est executé chaque frame
 function animate() {
     CheckAllToupiesCollisions(toupies);
     //loop
@@ -630,6 +609,7 @@ function animate() {
     //end animate
 }
 
-
+//######################################### Lancement du canvas ###################################################
 init()
+
 animate()
