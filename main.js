@@ -24,6 +24,7 @@ const defense_instability = 0.975 //plus c'est élevé, plus une toupie defense 
 
 //######################################### Iitialisation de certains tableaux ###################################################
 let particles = [];
+let tailParticles = [];
 let toupies = [];
 let background;
 
@@ -102,7 +103,11 @@ class Toupie {
         if(this.life <= 0){
             this.burst()
         }
-     
+        if(this.alive){
+            generateTailParticles(this);
+
+        }
+
         this.x += this.velocity.x;
         this.y += this.velocity.y;
 
@@ -172,6 +177,7 @@ class Particle {
         c.globalAlpha = this.alpha;
         c.fill()
         c.closePath()
+
     }
 
     update() {
@@ -208,6 +214,54 @@ class Particle {
 
         this.draw()
     }
+
+
+}
+
+class TailParticle {
+    constructor(x, y,  color) {
+    this.x = x;
+    this.y = y;
+    this.radius = 10;
+    this.baseRadius = 10;
+    this.color = color;
+    this.killed = false;
+    this.alpha = 0.2;
+
+}
+
+draw() {
+    c.beginPath()
+    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+    c.fillStyle = this.color;
+
+    c.globalAlpha = this.alpha;
+    c.fill()
+    c.closePath()
+
+    c.beginPath()
+    c.arc(this.x, this.y, this.radius+1, 0, Math.PI * 2, false)
+    c.fillStyle = "#ffffff";
+
+    c.globalAlpha = 0.1;
+    c.fill()
+    c.closePath()
+}
+
+update() {
+
+
+        this.radius -= 0.5
+
+
+
+    if (this.radius < 1){
+        delete this.x;
+        this.killed = true;
+    }
+
+    this.draw()
+}
 
 
 }
@@ -452,6 +506,7 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
     }
 }
+
 //dessine une toupie
 function drawToupie(toupie) {
     //sauvegarde de l'état du canvas avant de le faire tourner
@@ -610,8 +665,16 @@ function passiveMoovement(toupie, center) {
 
 
 }
+
+// Sors une valeur random d'un array
 function randomFromArray(categories) {
     return categories[Math.floor(Math.random() * categories.length)]
+
+}
+
+function generateTailParticles(toupie){
+
+    tailParticles.push(new TailParticle(toupie.x, toupie.y, toupie.color))
 
 }
 
@@ -625,6 +688,8 @@ function init() {
 
     toupies = [];
     particles = [];
+    tailParticles = [];
+
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
@@ -666,6 +731,9 @@ function init() {
 
 // Est executé chaque frame
 function animate() {
+
+    tailParticles = tailParticles.slice(-40)
+    particles = particles.slice(-800)
     CheckAllToupiesCollisions(toupies);
     //loop
     requestAnimationFrame(animate);
@@ -674,6 +742,11 @@ function animate() {
     //update du center de l'arenne et du background
     background.update();
     center.update();
+
+    //update de la trainée des toupies
+    tailParticles.forEach(tailParticle=>{
+        tailParticle.update()
+    })
 
     //update particles
     particles.forEach(particle => {
