@@ -17,6 +17,7 @@ const gravitationalStrenght = 1.0005; // puissance de la gravité
 const friction_object = 0.95;
 const friction_edge = 0.80;
 const friction_rotation = 0.9998;
+const defense_instability = 0.98 //plus c'est élevé, plus une toupie defense sera instable
 
 //######################################### Iitialisation de certains tableaux ###################################################
 let particles = [];
@@ -588,8 +589,8 @@ function passiveMoovement(toupie, center) {
     let rotation_slow = (1 - 1 / (1 + toupie.rotation * 10));
     console.log(rotation_slow);
 
-    toupie.velocity.x = toupie.velocity.x * rotation_slow + xDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
-    toupie.velocity.y = toupie.velocity.y * rotation_slow + yDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+    toupie.velocity.x = toupie.velocity.x * rotation_slow * defense_instability + xDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+    toupie.velocity.y = toupie.velocity.y * rotation_slow * defense_instability + yDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
 
 
 
