@@ -621,7 +621,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 200, velocity, 'attack'));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'defense'));
     }
     background = new BackGround(center);
 
