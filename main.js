@@ -610,8 +610,8 @@ function init() {
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
 
-        let VelocityX = randomIntFromRange(-20,20);
-        let VelocityY = randomIntFromRange(-20,20);
+        let VelocityX = randomIntFromRange(-15,15);
+        let VelocityY = randomIntFromRange(-15,15);
         let velocity = {
             x: VelocityX,
             y: VelocityY
@@ -620,7 +620,8 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'defense'));
+
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 200, velocity, 'attack'));
     }
     background = new BackGround(center);
 
