@@ -6,9 +6,9 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
-const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010', '#75E0D2'];
-const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126', '#75E0D2'];
-const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872', '#75E0D2'];
+const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
+const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
+const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872'];
 const categories = ["defense", "attack", "stamina"];
 
 const mouse = {
@@ -27,8 +27,10 @@ const defense_instability = 0.975 //plus c'est élevé, plus une toupie defense 
 let particles = [];
 let tailParticles = [];
 let toupies = [];
+let directionArrows = [];
 let background;
 let gameOn = false;
+let placedPlayerToupie = false;
 
 
 
@@ -338,6 +340,36 @@ class BackGround{
     }
 }
 
+class DirectionArrow{
+    constructor(toupie, tox,toy) {
+        this.toupie = toupie
+        this.x = toupie.x;
+        this.y = toupie.y;
+        this.tox = tox;
+        this.toy = toy;
+    }
+    draw(){
+        c.beginPath();
+        canvas_arrow(this.x, this.y, this.tox, this.toy);
+        c.lineWidth = 3;
+        c.strokeStyle = '#FFFFFFFF';
+        c.stroke();
+    }
+    update(){
+        this.x = this.toupie.x;
+        this.y = this.toupie.y;
+        this.tox = mouse.x;
+        this.toy = mouse.y;
+        //update egalement la velocité de la toupie
+        let diffX = this.tox-this.x;
+        let diffY = this.toy-this.y;
+        this.toupie.velocity.x = diffX/10;
+        this.toupie.velocity.y = diffY/10;
+        this.draw();
+    }
+
+
+}
 //######################################### Event listeners ###################################################
 // Traque la position de la souris
 addEventListener('mousemove', (event) => {
@@ -360,7 +392,10 @@ addEventListener('click', (event) => {
 
         init();
     }else {
-        gameOn = true;
+        if(placedPlayerToupie){
+            gameOn = true;
+        }
+        placedPlayerToupie = true;
     }
     mouse.x = event.clientX
     mouse.y = event.clientY
@@ -548,6 +583,7 @@ function drawToupie(toupie) {
         c.strokeStyle = '#ff0000';
 
     }
+    c.lineWidth = 1;
     c.beginPath();
     c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
     c.fillStyle = toupie.color;
@@ -707,13 +743,24 @@ function randomFromArray(categories) {
 
 }
 
+//genere les particules de trainées d'une toupie
 function generateTailParticles(toupie){
 
     tailParticles.push(new TailParticle(toupie.x, toupie.y, toupie.color))
 
 }
 
-
+function canvas_arrow(fromx, fromy, tox, toy) {
+    var headlen = 10; // length of head in pixels
+    var dx = tox - fromx;
+    var dy = toy - fromy;
+    var angle = Math.atan2(dy, dx);
+    c.moveTo(fromx, fromy);
+    c.lineTo(tox, toy);
+    c.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+    c.moveTo(tox, toy);
+    c.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+}
 
 //création d'une toupie random (si aucune valeur donnée)
 function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*5 / 6), toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6), id = toupies.length){
@@ -754,9 +801,11 @@ function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*
 // lance la partie
 function init() {
     gameOn = false;
+    placedPlayerToupie =false;
     toupies = [];
     particles = [];
     tailParticles = [];
+    directionArrows = [];
 
 
 
@@ -764,8 +813,11 @@ function init() {
 
     //création de la toupie du joueur
     playerToupie = newRandomToupie(mouse.x, mouse.y);
-
     toupies.push(playerToupie);
+    //creation de la fleche de direction du joueur
+    let directionArrow = new DirectionArrow(playerToupie, mouse.x, mouse.y);
+    directionArrows.push(directionArrow);
+    console.log(directionArrows);
 
 
 
@@ -790,31 +842,44 @@ function animate() {
     background.update();
     center.update();
     console.log(gameOn)
-    if (gameOn){
-        CheckAllToupiesCollisions(toupies);
-        //loop
+    if (placedPlayerToupie){
+        if (gameOn){
+            CheckAllToupiesCollisions(toupies);
+            //loop
 
 
-        //update de la trainée des toupies
-        tailParticles.forEach(tailParticle=>{
-            tailParticle.update()
-        })
+            //update de la trainée des toupies
+            tailParticles.forEach(tailParticle=>{
+                tailParticle.update()
+            })
 
-        //update particles
-        particles.forEach(particle => {
+            //update particles
+            particles.forEach(particle => {
 
-            particle.update()
-        });
+                particle.update()
+            });
 
-        //update toupies
-        toupies.forEach(toupie => {
+            //update toupies
+            toupies.forEach(toupie => {
 
-            toupie.update()
-        });
-    }
+                toupie.update()
+            });
+        }
 
 
-    else{
+        else{
+            //la toupie est positioné, tracage de la fleche pour la direction
+            toupies.forEach(toupie => {
+
+                toupie.draw()
+            });
+            directionArrows.forEach((directionArrow=>{
+                directionArrow.update()
+            }))
+
+        }
+    }else {
+        //positionnemnt de la toupie
         toupies.forEach(toupie => {
 
             toupie.draw()
