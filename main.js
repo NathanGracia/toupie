@@ -13,7 +13,7 @@ const mouse = {
 };
 
 // ######################################## config physique ###########################################################
-const gravitationalStrenght = 1.00000;
+const gravitationalStrenght = 1.0005; // puissance de la gravité
 const friction_object = 0.95;
 const friction_edge = 0.80;
 const friction_rotation = 0.9998;
@@ -28,7 +28,7 @@ let background;
 
 //######################################### Entités ###################################################
 class Toupie {
-    constructor(id, x, y, radius,color, center, rotation, velocity) {
+    constructor(id, x, y, radius,color, center, rotation, velocity, category) {
         this.id = id;
         this.x = x; // position x
         this.y = y; // position y
@@ -46,6 +46,8 @@ class Toupie {
         this.bursted = false; // True lorsque la toupie n'a plus de point de vie
         this.alive = true; // False lorsqu'elle n'a plus de rotation. Alors il y a un speed malus et apres quelques frame elle passe en fulldead
         this.out = false // True lorsqu'elle est en dehors du stadium
+
+        this.category = category;
 
     }
 
@@ -79,7 +81,7 @@ class Toupie {
         }
 
         if(!this.out){
-            followPoint(this, this.center)
+            moove(this)
         }
 
        //si la toupie est encore vivante, elle se déplace normalement
@@ -503,9 +505,12 @@ function ultraSlowToupie(toupie) {
         toupie.rotation = 0
 
     }else {
+
         //ralentie rapidement la toupie
-        toupie.velocity.x = (toupie.velocity.x * toupie.speed_malus + xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
-        toupie.velocity.y = (toupie.velocity.y * toupie.speed_malus + yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
+        let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
+
+        toupie.velocity.x = toupie.velocity.x  * toupie.speed_malus;
+        toupie.velocity.y = toupie.velocity.y  * toupie.speed_malus;
     }
 
 }
@@ -533,11 +538,23 @@ function bounceOnEdge(moovable) {
 
 }
 
-// Fait suivre un point à un element deplacable
-function followPoint(moovable, point) {
+function moove(toupie){
+    if(toupie.category === "attack"){
+        attackMovement(toupie, toupie.center)
+    }
 
-    let xDiff = point.x - moovable.x;
-    let yDiff = point.y - moovable.y;
+    if(toupie.category === "defense"){
+        passiveMoovement(toupie, toupie.center)
+    }
+
+}
+// Fait suivre un point à un element deplacable
+
+function attackMovement(toupie, center) {
+
+    let xDiff = center.x - toupie.x;
+    let yDiff = center.y - toupie.y;
+
     //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
     let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
 
@@ -547,15 +564,36 @@ function followPoint(moovable, point) {
     let xDeplacement = xWanted;
     let yDeplacement = yWanted;
 
-    let rotation_slow = (1 - 1 / (1 + moovable.rotation * 1000));
 
+    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
 
-    moovable.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
-    moovable.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
-
+    toupie.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
+    toupie.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
 
 }
 
+// La toupie sera repoussé par les bords
+function passiveMoovement(toupie, center) {
+    let xDiff = center.x - toupie.x;
+    let yDiff = center.y - toupie.y;
+
+
+
+    let xWanted = xDiff / 600;
+    let yWanted = yDiff / 600;
+
+    let xDeplacement = xWanted;
+    let yDeplacement = yWanted;
+
+    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 10));
+    console.log(rotation_slow);
+
+    toupie.velocity.x = toupie.velocity.x * rotation_slow + xDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+    toupie.velocity.y = toupie.velocity.y * rotation_slow + yDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+
+
+
+}
 
 //######################################### Fonctions moteur canvas ###################################################
 
@@ -582,7 +620,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'defense'));
     }
     background = new BackGround(center);
 
