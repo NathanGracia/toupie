@@ -6,9 +6,10 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
-const color_attack = ['#87ff09', '#ff217c', '#ff9831', '#faff07', '#75E0D2'];
-const color_defense = ['#195e22', '#193969', '#56207c', '#72086a', '#75E0D2'];
-const categories = ["defense", "attack"];
+const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010', '#75E0D2'];
+const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126', '#75E0D2'];
+const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872', '#75E0D2'];
+const categories = ["defense", "attack", "stamina"];
 
 const mouse = {
     x: innerWidth / 2,
@@ -520,7 +521,13 @@ function drawToupie(toupie) {
     toupie.rotation *= friction_rotation * toupie.speed_malus;
 
     //tracage du cercle
-    c.strokeStyle = '#000000';
+    if(toupie.alive){
+        c.strokeStyle = '#000000';
+
+    }else {
+        c.strokeStyle = '#ff0000';
+
+    }
     c.beginPath();
     c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
     c.fillStyle = toupie.color;
@@ -547,6 +554,7 @@ function drawToupie(toupie) {
 
 //Affiche le debug au dessus d'une toupie
 function showDebugToupie(strings, toupie){
+    c.globalAlpha = 1;
     c.font = '30px Arial';
     c.fillStyle = "rgba(255, 255, 255, 0.8)";
     c.textAlign = "center";
@@ -614,7 +622,7 @@ function moove(toupie){
         attackMovement(toupie, toupie.center)
     }
 
-    if(toupie.category === "defense"){
+    if(toupie.category === "defense" || toupie.category === "stamina"){
         passiveMoovement(toupie, toupie.center)
     }
 
@@ -706,15 +714,20 @@ function init() {
         };
         let category = randomFromArray(categories);
         let color = "";
-        let life;
-
+        let rotation = 50;
+        let life = 30;
         if (category === 'attack'){
             color = randomColor(color_attack)
-            life = 30;
+            rotation = 40;
         }
         if (category === 'defense'){
             color = randomColor(color_defense)
-            life = 60;
+            life = 50;
+        }
+        if (category === 'stamina'){
+            rotation = 80;
+            life = 20;
+            color = randomColor(color_stamina)
         }
 
 
@@ -722,7 +735,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,color, center, 50, velocity, category, life));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,color, center, rotation, velocity, category, life));
     }
     background = new BackGround(center);
 
