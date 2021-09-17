@@ -13,7 +13,7 @@ const mouse = {
 };
 
 // ######################################## config physique ###########################################################
-const gravitationalStrenght = 1.00000;
+const gravitationalStrenght = 1.0005; // puissance de la gravité
 const friction_object = 0.95;
 const friction_edge = 0.80;
 const friction_rotation = 0.9998;
@@ -79,11 +79,7 @@ class Toupie {
             this.velocity.y = (this.velocity.y * this.speed_malus ) * rotation_slow * this.speed_malus  ;
         }
         if(!this.out){
-            if(this.category === 'attack'){
-                attackMovement(this, this.center)
-            }else{
-                passiveMoovement(this, this.center)
-            }
+            moove(this)
         }
        //si la toupie est encore vivante, elle se déplace normalement
         if (!this.alive ) {
@@ -109,7 +105,7 @@ class Toupie {
 
         //creation des particules en fonction du radius de la toupie
         for (let i = 0; i < this.radius*5 ; i++) {
-            console.log('aaa')
+
             let radius2 = randomFromRange(1, 4);
             let ranVelocityX2 = randomFromRange(-10, 10);
             let ranVelocityY2 = randomFromRange(-10, 10);
@@ -343,7 +339,6 @@ function resolveCollision(particle, otherParticle) {
         // Swap particle velocities for realistic bounce effect
         particle.velocity.x = vFinal1.x * friction_object;
         particle.velocity.y = vFinal1.y * friction_object;
-        console.log(particle.velocity )
 
         otherParticle.velocity.x = vFinal2.x * friction_object;
         otherParticle.velocity.y = vFinal2.y * friction_object;
@@ -505,9 +500,12 @@ function ultraSlowToupie(toupie) {
         toupie.rotation = 0
 
     }else {
+
         //ralentie rapidement la toupie
-        toupie.velocity.x = (toupie.velocity.x * toupie.speed_malus + xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
-        toupie.velocity.y = (toupie.velocity.y * toupie.speed_malus + yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus) * rotation_slow * toupie.speed_malus;
+        let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
+
+        toupie.velocity.x = toupie.velocity.x  * toupie.speed_malus;
+        toupie.velocity.y = toupie.velocity.y  * toupie.speed_malus;
     }
 
 }
@@ -535,8 +533,19 @@ function bounceOnEdge(moovable) {
 
 }
 
+function moove(toupie){
+    if(toupie.category === "attack"){
+        attackMovement(toupie, toupie.center)
+    }
+
+    if(toupie.category === "defense"){
+        passiveMoovement(toupie, toupie.center)
+    }
+
+}
 // Fait suivre un point à un element deplacable
 function attackMovement(toupie, center) {
+
     let xDiff = center.x - toupie.x;
     let yDiff = center.y - toupie.y;
     //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
@@ -548,7 +557,7 @@ function attackMovement(toupie, center) {
     let xDeplacement = xWanted;
     let yDeplacement = yWanted;
 
-    let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
 
     toupie.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
     toupie.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
@@ -558,19 +567,22 @@ function attackMovement(toupie, center) {
 function passiveMoovement(toupie, center) {
     let xDiff = center.x - toupie.x;
     let yDiff = center.y - toupie.y;
-    //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
-    let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
 
-    let xWanted = xDiff / additionDistance;
-    let yWanted = yDiff / additionDistance;
+
+
+    let xWanted = xDiff / 600;
+    let yWanted = yDiff / 600;
 
     let xDeplacement = xWanted;
     let yDeplacement = yWanted;
 
-    let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 10));
+    console.log(rotation_slow);
 
-    toupie.velocity.x += 1/(xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus);
-    toupie.velocity.y += 1/(yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus);
+    toupie.velocity.x = toupie.velocity.x * rotation_slow + xDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+    toupie.velocity.y = toupie.velocity.y * rotation_slow + yDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
+
+
 
 }
 
@@ -584,7 +596,7 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 1; i++) {
 
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
@@ -598,7 +610,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'attack'));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'defense'));
     }
     background = new BackGround(center);
 
@@ -615,7 +627,7 @@ function animate() {
     //update du center de l'arenne et du background
     background.update();
     center.update();
-    console.log(toupies)
+
 
     //update toupies
     toupies.forEach(toupie => {
