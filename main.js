@@ -28,7 +28,7 @@ let background;
 
 //######################################### Entités ###################################################
 class Toupie {
-    constructor(id, x, y, radius,color, center, rotation, velocity) {
+    constructor(id, x, y, radius,color, center, rotation, velocity, category) {
         this.id = id;
         this.x = x; // position x
         this.y = y; // position y
@@ -45,6 +45,7 @@ class Toupie {
         this.bursted = false; // True lorsque la toupie n'a plus de point de vie
         this.alive = true; // False lorsqu'elle n'a plus de rotation. Alors il y a un speed malus et apres quelques frame elle passe en fulldead
         this.out = false // True lorsqu'elle est en dehors du stadium
+        this.category = category;
     }
 
     // affiche la toupie à l'écran
@@ -70,7 +71,7 @@ class Toupie {
 
 
         //check si la toupie est en dehors du terrain
-        if(checkIfIsInCircle(toupie, toupie.center)){
+        if(checkIfIsInCircle(this, this.center)){
             this.out = true;
             this.speed_malus -= 0.010
             let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
@@ -78,7 +79,11 @@ class Toupie {
             this.velocity.y = (this.velocity.y * this.speed_malus ) * rotation_slow * this.speed_malus  ;
         }
         if(!this.out){
-            followPoint(this, this.center)
+            if(this.category === 'attack'){
+                attackMovement(this, this.center)
+            }else{
+                passiveMoovement(this, this.center)
+            }
         }
        //si la toupie est encore vivante, elle se déplace normalement
         if (!this.alive ) {
@@ -531,9 +536,9 @@ function bounceOnEdge(moovable) {
 }
 
 // Fait suivre un point à un element deplacable
-function followPoint(moovable, point) {
-    let xDiff = point.x - moovable.x;
-    let yDiff = point.y - moovable.y;
+function attackMovement(toupie, center) {
+    let xDiff = center.x - toupie.x;
+    let yDiff = center.y - toupie.y;
     //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
     let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
 
@@ -545,10 +550,29 @@ function followPoint(moovable, point) {
 
     let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
 
-    moovable.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
-    moovable.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * moovable.speed_malus;
+    toupie.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
+    toupie.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
 }
 
+// La toupie sera repoussé par les bords
+function passiveMoovement(toupie, center) {
+    let xDiff = center.x - toupie.x;
+    let yDiff = center.y - toupie.y;
+    //prendre que les valeurs : passe en positif si negatif, ou bien reste en positif
+    let additionDistance = Math.sign(xDiff) * xDiff + Math.sign(yDiff) * yDiff;
+
+    let xWanted = xDiff / additionDistance;
+    let yWanted = yDiff / additionDistance;
+
+    let xDeplacement = xWanted;
+    let yDeplacement = yWanted;
+
+    let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
+
+    toupie.velocity.x += 1/(xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus);
+    toupie.velocity.y += 1/(yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus);
+
+}
 
 //######################################### Fonctions moteur canvas ###################################################
 
@@ -574,7 +598,7 @@ function init() {
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity));
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'attack'));
     }
     background = new BackGround(center);
 
@@ -591,7 +615,7 @@ function animate() {
     //update du center de l'arenne et du background
     background.update();
     center.update();
-
+    console.log(toupies)
 
     //update toupies
     toupies.forEach(toupie => {
