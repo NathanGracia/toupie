@@ -28,6 +28,8 @@ let particles = [];
 let tailParticles = [];
 let toupies = [];
 let background;
+let gameOn = false;
+
 
 
 
@@ -67,6 +69,7 @@ class Toupie {
             showDebugToupie([
                 "Rotation  : " + Math.round(this.rotation*100)/100,
                 "Life  : " + Math.round(this.life*100)/100,
+                this.category,
             ], this);
         }
 
@@ -111,6 +114,10 @@ class Toupie {
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
+
+        //cahngement de l'angle et de la rotation
+        this.angle += 1;
+        this.rotation *= friction_rotation * this.speed_malus;
 
         this.draw();
 
@@ -348,8 +355,16 @@ addEventListener('resize', () => {
 
 //######################################### Iitialisation du canvas ###################################################
 // Traque les clics de l'utilisateur
-addEventListener('click', () => {
-    init()
+addEventListener('click', (event) => {
+    if(gameOn){
+
+        init();
+    }else {
+        gameOn = true;
+    }
+    mouse.x = event.clientX
+    mouse.y = event.clientY
+
 });
 
 
@@ -523,8 +538,7 @@ function drawToupie(toupie) {
 
     //on tourne avec l'angle
     c.rotate(toupie.angle * toupie.rotation * Math.PI / 180);
-    toupie.angle += 1;
-    toupie.rotation *= friction_rotation * toupie.speed_malus;
+
 
     //tracage du cercle
     if(toupie.alive){
@@ -699,6 +713,39 @@ function generateTailParticles(toupie){
 
 }
 
+
+
+//création d'une toupie random (si aucune valeur donnée)
+function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*5 / 6), toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6), id = toupies.length){
+
+
+    let VelocityX = randomIntFromRange(-10,10);
+    let VelocityY = randomIntFromRange(-10,10);
+    let velocity = {
+        x: VelocityX,
+        y: VelocityY
+    };
+    let category = randomFromArray(categories);
+    let color = "";
+    let rotation = 50;
+    let life = 30;
+    if (category === 'attack'){
+        color = randomColor(color_attack)
+        rotation = 40;
+    }
+    if (category === 'defense'){
+        color = randomColor(color_defense)
+        life = 50;
+    }
+    if (category === 'stamina'){
+        rotation = 80;
+        life = 20;
+        color = randomColor(color_stamina)
+    }
+
+    return new Toupie(id, toupieX, toupieY, 30,color, center, rotation, velocity, category, life*3);
+}
+
 //######################################### Fonctions moteur canvas ###################################################
 
 
@@ -706,7 +753,7 @@ function generateTailParticles(toupie){
 
 // lance la partie
 function init() {
-
+    gameOn = false;
     toupies = [];
     particles = [];
     tailParticles = [];
@@ -714,41 +761,17 @@ function init() {
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 2; i++) {
 
-        let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
-        let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
+    //création de la toupie du joueur
+    playerToupie = newRandomToupie(mouse.x, mouse.y);
 
-        let VelocityX = randomIntFromRange(-15,15);
-        let VelocityY = randomIntFromRange(-15,15);
-        let velocity = {
-            x: VelocityX,
-            y: VelocityY
-        };
-        let category = randomFromArray(categories);
-        let color = "";
-        let rotation = 50;
-        let life = 30;
-        if (category === 'attack'){
-            color = randomColor(color_attack)
-            rotation = 40;
-        }
-        if (category === 'defense'){
-            color = randomColor(color_defense)
-            life = 50;
-        }
-        if (category === 'stamina'){
-            rotation = 80;
-            life = 20;
-            color = randomColor(color_stamina)
-        }
+    toupies.push(playerToupie);
 
 
 
+    for (let i = 0; i < 1; i++) {
 
-
-
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,color, center, rotation, velocity, category, life));
+        toupies.push(newRandomToupie());
     }
     background = new BackGround(center);
 
@@ -757,34 +780,50 @@ function init() {
 
 // Est executé chaque frame
 function animate() {
-
+    //optimisation des particules
     tailParticles = tailParticles.slice(-40)
     particles = particles.slice(-800)
-    CheckAllToupiesCollisions(toupies);
-    //loop
-    requestAnimationFrame(animate);
+
     //clear page
     c.clearRect(0, 0, canvas.width, canvas.height);
     //update du center de l'arenne et du background
     background.update();
     center.update();
+    console.log(gameOn)
+    if (gameOn){
+        CheckAllToupiesCollisions(toupies);
+        //loop
 
-    //update de la trainée des toupies
-    tailParticles.forEach(tailParticle=>{
-        tailParticle.update()
-    })
 
-    //update particles
-    particles.forEach(particle => {
+        //update de la trainée des toupies
+        tailParticles.forEach(tailParticle=>{
+            tailParticle.update()
+        })
 
-        particle.update()
-    });
+        //update particles
+        particles.forEach(particle => {
 
-    //update toupies
-    toupies.forEach(toupie => {
+            particle.update()
+        });
 
-        toupie.update()
-    });
+        //update toupies
+        toupies.forEach(toupie => {
+
+            toupie.update()
+        });
+    }
+
+
+    else{
+        toupies.forEach(toupie => {
+
+            toupie.draw()
+        });
+        playerToupie.x = mouse.x;
+        playerToupie.y = mouse.y;
+
+    }
+    requestAnimationFrame(animate);
 
 
 
