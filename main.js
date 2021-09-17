@@ -6,7 +6,10 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
-const color_toupies = ['#A57BEB', '#67D972', '#FF5A56', '#F5B841', '#75E0D2'];
+const color_attack = ['#87ff09', '#ff217c', '#31ffbe', '#faff07', '#75E0D2'];
+const color_defense = ['#195e22', '#183663', '#56207c', '#72086a', '#75E0D2'];
+const categories = ["defense", "attack"];
+
 const mouse = {
     x: innerWidth / 2,
     y: innerHeight / 2
@@ -17,7 +20,7 @@ const gravitationalStrenght = 1.0005; // puissance de la gravité
 const friction_object = 0.95;
 const friction_edge = 0.80;
 const friction_rotation = 0.9998;
-const defense_instability = 0.98 //plus c'est élevé, plus une toupie defense sera instable
+const defense_instability = 0.975 //plus c'est élevé, plus une toupie defense sera instable
 
 //######################################### Iitialisation de certains tableaux ###################################################
 let particles = [];
@@ -29,7 +32,7 @@ let background;
 
 //######################################### Entités ###################################################
 class Toupie {
-    constructor(id, x, y, radius,color, center, rotation, velocity, category) {
+    constructor(id, x, y, radius,color, center, rotation, velocity, category, life) {
         this.id = id;
         this.x = x; // position x
         this.y = y; // position y
@@ -37,7 +40,7 @@ class Toupie {
         this.color = color; // Couleur du fond de la toupie
         this.velocity = velocity;
 
-        this.life = this.radius*2; // si les points vie tombe à 0, la toupie burst
+        this.life = life; // si les points vie tombe à 0, la toupie burst
         this.center = center; // Centre du canvas, là où elles seront attirées
         this.mass = radius; // utilisé dans le calcul des collision Newton
         this.angle = 0; // Rotation de la toupie actuelle
@@ -152,6 +155,7 @@ class Particle {
         this.x = x;
         this.y = y;
         this.radius = radius;
+        this.baseRadius = radius;
         this.color = color;
         this.velocity = velocity;
         this.killed = false;
@@ -178,18 +182,17 @@ class Particle {
         //sinon, ca se deplace normalement
 
         this.x += this.velocity.x;
-        this.velocity.x = this.velocity.x / gravitationalStrenght;
-        this.velocity.y = this.velocity.y / gravitationalStrenght;
+        this.velocity.x = this.velocity.x / gravitationalStrenght*0.99;
+        this.velocity.y = this.velocity.y / gravitationalStrenght*0.99;
         this.y += this.velocity.y;
 
 
         //disparait petit à petit
-        this.radius -= 0.1
-        if (this.radius < 0) {
-
-            delete this.x;
-            this.killed = true;
+        if (this.radius > this.baseRadius/5){
+            this.radius -= 0.01
         }
+
+
 
         this.draw()
     }
@@ -595,18 +598,25 @@ function passiveMoovement(toupie, center) {
 
 
 }
+function randomFromArray(categories) {
+    return categories[Math.floor(Math.random() * categories.length)]
+
+}
 
 //######################################### Fonctions moteur canvas ###################################################
+
+
 
 
 // lance la partie
 function init() {
 
     toupies = [];
+    particles = [];
 
 
     center = new Center(innerWidth / 2, innerHeight / 2,);
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 2; i++) {
 
         let toupieX = randomIntFromRange(innerWidth / 6, innerWidth*5 / 6);
         let toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6);
@@ -617,12 +627,25 @@ function init() {
             x: VelocityX,
             y: VelocityY
         };
+        let category = randomFromArray(categories);
+        let color = "";
+        let life;
+
+        if (category === 'attack'){
+            color = randomColor(color_attack)
+            life = 30;
+        }
+        if (category === 'defense'){
+            color = randomColor(color_defense)
+            life = 60;
+        }
 
 
 
 
 
-        toupies.push(new Toupie(i, toupieX, toupieY, 30,randomColor(color_toupies), center, 50, velocity, 'defense'));
+
+        toupies.push(new Toupie(i, toupieX, toupieY, 30,color, center, 50, velocity, category, life));
     }
     background = new BackGround(center);
 
