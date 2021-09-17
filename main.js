@@ -545,7 +545,14 @@ function drawToupie(toupie) {
     c.lineTo(+toupie.radius * 13 / 16, +toupie.radius * 13 / 16);
     c.moveTo(+toupie.radius * 13 / 16, -toupie.radius * 13 / 16);
     c.lineTo(-toupie.radius * 13 / 16, +toupie.radius * 13 / 16);
-    c.strokeStyle = '#ffffffff';
+    if(toupie.alive){
+        c.strokeStyle = '#ffffffff';
+
+
+    }else {
+        c.strokeStyle = '#6e0c0c';
+
+    }
     c.stroke();
 
     //on replace le point d'origine du canvas a truc normal
