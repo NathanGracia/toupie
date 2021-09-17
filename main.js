@@ -6,8 +6,8 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
-const color_attack = ['#87ff09', '#ff217c', '#31ffbe', '#faff07', '#75E0D2'];
-const color_defense = ['#195e22', '#183663', '#56207c', '#72086a', '#75E0D2'];
+const color_attack = ['#87ff09', '#ff217c', '#ff9831', '#faff07', '#75E0D2'];
+const color_defense = ['#195e22', '#193969', '#56207c', '#72086a', '#75E0D2'];
 const categories = ["defense", "attack"];
 
 const mouse = {
@@ -76,7 +76,7 @@ class Toupie {
 
 
         //check si la toupie est en dehors du terrain
-        if(checkIfIsInCircle(this, this.center)){
+        if(checkIfIsOutOfCircle(this, this.center)){
             this.out = true;
             this.speed_malus -= 0.010
             let rotation_slow = (1 - 1 / (1 + this.rotation * 1000));
@@ -112,7 +112,7 @@ class Toupie {
     burst(){
 
         //creation des particules en fonction du radius de la toupie
-        for (let i = 0; i < this.radius*5 ; i++) {
+        for (let i = 0; i < this.radius*6 ; i++) {
 
             let radius2 = randomFromRange(1, 4);
             let ranVelocityX2 = randomFromRange(-10, 10);
@@ -121,7 +121,7 @@ class Toupie {
                 x: ranVelocityX2,
                 y: ranVelocityY2
             };
-            particles.push(new Particle(this.x, this.y, radius2, this.color, velocity2))
+            particles.push(new Particle(this.x, this.y, radius2, this.color, velocity2, this.center))
 
             let radius = randomFromRange(2, 6);
             let ranVelocityX = randomFromRange(-5, 5);
@@ -130,7 +130,7 @@ class Toupie {
                 x: ranVelocityX,
                 y: ranVelocityY
             };
-            particles.push(new Particle(this.x, this.y, radius, this.color, velocity))
+            particles.push(new Particle(this.x, this.y, radius, this.color, velocity, this.center))
 
 
             let radius3 = randomFromRange(4, 8);
@@ -140,7 +140,7 @@ class Toupie {
                 x: ranVelocityX3,
                 y: ranVelocityY3
             };
-            particles.push(new Particle(this.x, this.y, radius3, this.color, velocity3))
+            particles.push(new Particle(this.x, this.y, radius3, this.color, velocity3, this.center))
         }
         this.bursted = true;
         this.rotation = 0;
@@ -151,11 +151,12 @@ class Toupie {
 }
 
 class Particle {
-    constructor(x, y, radius, color, velocity) {
+    constructor(x, y, radius, color, velocity, center) {
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.baseRadius = radius;
+        this.center = center;
         this.color = color;
         this.velocity = velocity;
         this.killed = false;
@@ -188,9 +189,20 @@ class Particle {
 
 
         //disparait petit à petit
-        if (this.radius > this.baseRadius/5){
+        if (this.radius > this.baseRadius/3){
             this.radius -= 0.01
         }
+
+        if(checkIfIsOutOfCircle(this, this.center)){
+            this.radius -= 0.01
+            if (this.radius < 1){
+                delete this.x;
+                this.killed = true;
+            }
+
+        }
+   
+
 
 
 
@@ -418,7 +430,7 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
         toupie2.life -= damages * bonus2;
 
         //creation des particules en fonction des degats
-        for (let i = 0; i < damages *5; i++) {
+        for (let i = 0; i < damages *10; i++) {
             let radius = randomFromRange(2, 8);
             let ranVelocityX = toupie1.velocity.x + randomFromRange(-5, 5);
             let ranVelocityY = toupie1.velocity.y + randomFromRange(-5, 2);
@@ -426,7 +438,7 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
                 x: ranVelocityX,
                 y: ranVelocityY
             };
-            particles.push(new Particle(toupie1.x, toupie1.y, radius, toupie1.color, velocity))
+            particles.push(new Particle(toupie1.x, toupie1.y, radius, toupie1.color, velocity, toupie1.center))
             let radius2 = randomFromRange(1, 4);
             let ranVelocityX2 = toupie1.velocity.x + randomFromRange(-5, 5);
             let ranVelocityY2 = toupie1.velocity.y + randomFromRange(-5, 2);
@@ -434,7 +446,7 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
                 x: ranVelocityX2,
                 y: ranVelocityY2
             };
-            particles.push(new Particle(toupie1.x, toupie1.y, radius2, toupie1.color, velocity2))
+            particles.push(new Particle(toupie1.x, toupie1.y, radius2, toupie1.color, velocity2, toupie2.center))
         }
 
 
@@ -492,7 +504,7 @@ function showDebugToupie(strings, toupie){
 }
 
 // Check si un point est dans le cercle
-function checkIfIsInCircle(point, circle) {
+function checkIfIsOutOfCircle(point, circle) {
     if(Math.pow((point.x - circle.x), 2) + Math.pow((point.y - circle.y), 2) > Math.pow(circle.radius, 2) && !point.out){
         return true
     }
@@ -590,7 +602,7 @@ function passiveMoovement(toupie, center) {
     let yDeplacement = yWanted;
 
     let rotation_slow = (1 - 1 / (1 + toupie.rotation * 10));
-    console.log(rotation_slow);
+
 
     toupie.velocity.x = toupie.velocity.x * rotation_slow * defense_instability + xDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
     toupie.velocity.y = toupie.velocity.y * rotation_slow * defense_instability + yDeplacement * gravitationalStrenght * rotation_slow * toupie.speed_malus ;
@@ -663,6 +675,11 @@ function animate() {
     background.update();
     center.update();
 
+    //update particles
+    particles.forEach(particle => {
+
+        particle.update()
+    });
 
     //update toupies
     toupies.forEach(toupie => {
@@ -670,11 +687,7 @@ function animate() {
         toupie.update()
     });
 
-    //update particles
-    particles.forEach(particle => {
 
-        particle.update()
-    });
 
 
     //end animate
