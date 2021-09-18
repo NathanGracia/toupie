@@ -22,16 +22,16 @@ const gradient_color_in_arena = {
 }
 const categories = ["defense", "attack", "stamina"];
 const defenseStats = {
-    life: 150,
-    rotation: 50,
+    life: 100,
+    rotation: 70,
 }
 const attackStats = {
-    life: 90,
+    life: 80,
     rotation: 40,
 }
 const staminaStats = {
     life: 60,
-    rotation: 80,
+    rotation: 100,
 }
 
 const mouse = {
