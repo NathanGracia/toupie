@@ -418,6 +418,7 @@ class DirectionArrow{
     draw(){
         c.beginPath();
         canvas_arrow(this.x, this.y, this.tox, this.toy);
+        c.globalAlpha = 0.8;
         c.lineWidth = 3;
         c.strokeStyle = '#FFFFFFFF';
         c.stroke();
@@ -880,10 +881,12 @@ function attackMovement(toupie, center) {
     let yDeplacement = yWanted;
 
 
-    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 1000));
+    let rotation_slow = (1 - 1 / (1 + toupie.rotation * 10000));
 
-    toupie.velocity.x += xDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
-    toupie.velocity.y += yDeplacement / gravitationalStrenght * rotation_slow * toupie.speed_malus;
+    toupie.velocity.x += xDeplacement / gravitationalStrenght * toupie.speed_malus;
+    toupie.velocity.y += yDeplacement / gravitationalStrenght * toupie.speed_malus;
+    toupie.velocity.x *= rotation_slow;
+    toupie.velocity.y *= rotation_slow;
 
 }
 
