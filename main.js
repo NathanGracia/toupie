@@ -141,7 +141,7 @@ class Toupie {
         if(this.alive){
             // si la velocité additioné est assez grande, on fait une trainé
             let sumVelocity = Math.abs(this.velocity.x) + Math.abs(this.velocity.y);
-            console.log(sumVelocity);
+
             if(sumVelocity > velocityBeforeTail){
                 generateTailParticles(this);
             }
@@ -219,7 +219,7 @@ class Particle {
         c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
         c.fillStyle = '#FFFFFFFF';
 
-        c.globalAlpha = this.alpha/3;
+        c.globalAlpha = this.alpha/5;
         c.fill()
         c.closePath()
         c.beginPath()
@@ -291,36 +291,29 @@ class TailParticle {
 }
 
 draw() {
+
+
     c.beginPath()
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.fillStyle = '#FFFFFFFF';
-
-    c.globalAlpha = 0.2;
-    c.fill()
-    c.closePath()
-
-    c.beginPath()
-    c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
     c.fillStyle = this.color;
-
+    c.shadowColor = this.color;
+    c.shadowBlur = 15;
     c.globalAlpha = 0.3;
     c.fill()
     c.closePath()
 
     c.beginPath()
-    c.arc(this.x, this.y, this.radius+4, 0, Math.PI * 2, false)
-    c.fillStyle = '#FFFFFFFF';
-
-    c.globalAlpha = 0.05;
-    c.fill()
-    c.closePath()
-    c.beginPath()
-    c.arc(this.x, this.y, this.radius+4, 0, Math.PI * 2, false)
+    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
     c.fillStyle = this.color;
-
-    c.globalAlpha = 0.1;
+    c.shadowColor = '#FFFFFFFF';
+    c.shadowBlur = 10;
+    c.globalAlpha = 0.2;
     c.fill()
     c.closePath()
+
+    c.shadowColor = false;
+    c.shadowBlur = 0;
+
 }
 
 update() {
@@ -660,15 +653,6 @@ function drawToupie(toupie) {
         c.strokeStyle = '#ff0000';
 
     }
-    c.lineWidth = 0;
-    c.beginPath();
-    c.arc(0, 0, toupie.radius+5, 0, Math.PI * 2, false);
-    c.fillStyle = '#FFFFFFFF';
-    c.globalAlpha = 0.05;
-    c.fill();
-    c.stroke();
-    c.closePath()
-
 
 
 
@@ -676,6 +660,8 @@ function drawToupie(toupie) {
     c.beginPath();
     c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
     c.fillStyle = toupie.color;
+    c.shadowColor = toupie.color;
+    c.shadowBlur = 15;
     c.globalAlpha = 1;
     c.fill();
     c.stroke();
@@ -912,7 +898,7 @@ function init() {
     //creation de la fleche de direction du joueur
     let directionArrow = new DirectionArrow(playerToupie, mouse.x, mouse.y);
     directionArrows.push(directionArrow);
-    console.log(directionArrows);
+
 
 
 
@@ -936,7 +922,7 @@ function animate() {
     //update du center de l'arenne et du background
     background.update();
     center.update();
-    console.log(gameOn)
+
     if (placedPlayerToupie){
         if (gameOn){
             CheckAllToupiesCollisions(toupies);
