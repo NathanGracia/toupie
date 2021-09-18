@@ -10,11 +10,29 @@ const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
 const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
 const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872'];
 const categories = ["defense", "attack", "stamina"];
+const defenseStats = {
+    life: 150,
+    rotation: 50,
+}
+const attackStats = {
+    life: 90,
+    rotation: 40,
+}
+const staminaStats = {
+    life: 60,
+    rotation: 80,
+}
 
 const mouse = {
     x: innerWidth / 2,
     y: innerHeight / 2
 };
+
+// get query arguments
+let GET = getArgfromUrl()
+
+
+
 
 // ######################################## config physique ###########################################################
 const gravitationalStrenght = 1.0005; // puissance de la gravité
@@ -405,6 +423,18 @@ addEventListener('click', (event) => {
 
 //######################################### Outils ###################################################
 
+//récupere les arguments de l'url
+function getArgfromUrl() {
+    let $_GET = {},
+        args = location.search.substr(1).split(/&/);
+    for (let i=0; i<args.length; ++i) {
+        let tmp = args[i].split(/=/);
+        if (tmp[0] !== "") {
+            $_GET[decodeURIComponent(tmp[0])] = decodeURIComponent(tmp.slice(1).join("").replace("+", " "));
+        }
+    }
+    return $_GET;
+}
 // Génere un int random entre min et max
 function randomIntFromRange(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
@@ -507,7 +537,7 @@ function CheckAllToupiesCollisions(toupies) {
             checkCollisionToupieCenter(toupie1, toupie1.center)
         }
         toupies.forEach(toupie2 => {
-            if (toupie1.id !== toupie2.id) {
+            if (toupie1.id !== toupie2.id &&!toupie1.fulldead && !toupie2.fulldead) {
                 CheckTwoToupiesCollision(toupie1, toupie2);
             }
         })
@@ -537,8 +567,8 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
             bonus2 = 1.2
         }
 
-        toupie1.life -= damages * bonus1;
-        toupie2.life -= damages * bonus2;
+        toupie1.life -= damages * bonus2;
+        toupie2.life -= damages * bonus1;
 
         //creation des particules en fonction des degats
         for (let i = 0; i < damages *10; i++) {
@@ -661,7 +691,7 @@ function ultraSlowToupie(toupie) {
 function bounceOnEdge(moovable) {
 
     if (moovable.x - moovable.radius < 0 || moovable.x + moovable.radius > innerWidth) {
-        moovable.velocity.x *=-1
+        moovable.velocity.x *=-1.1 // pour eviter qu'elle se coince au bord à l'infinie
         moovable.rotation *= friction_edge;
 
         let damagesX = moovable.velocity.x
@@ -763,7 +793,7 @@ function canvas_arrow(fromx, fromy, tox, toy) {
 }
 
 //création d'une toupie random (si aucune valeur donnée)
-function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*5 / 6), toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6), id = toupies.length){
+function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*5 / 6), toupieY = randomIntFromRange(innerHeight / 6, innerHeight*5 / 6), category = null, id = toupies.length){
 
 
     let VelocityX = randomIntFromRange(-10,10);
@@ -772,25 +802,29 @@ function newRandomToupie(toupieX =randomIntFromRange(innerWidth / 6, innerWidth*
         x: VelocityX,
         y: VelocityY
     };
-    let category = randomFromArray(categories);
+
     let color = "";
-    let rotation = 50;
-    let life = 30;
+
+    if(!category){
+        category = randomFromArray(categories);
+    }
     if (category === 'attack'){
         color = randomColor(color_attack)
-        rotation = 40;
+        rotation = attackStats.rotation;
+        life = attackStats.life;
     }
     if (category === 'defense'){
         color = randomColor(color_defense)
-        life = 50;
+        rotation = defenseStats.rotation;
+        life = defenseStats.life;
     }
     if (category === 'stamina'){
-        rotation = 80;
-        life = 20;
+        rotation = staminaStats.rotation;
+        life = staminaStats.life;
         color = randomColor(color_stamina)
     }
 
-    return new Toupie(id, toupieX, toupieY, 30,color, center, rotation, velocity, category, life*3);
+    return new Toupie(id, toupieX, toupieY, 30,color, center, rotation, velocity, category, life);
 }
 
 //######################################### Fonctions moteur canvas ###################################################
@@ -812,7 +846,7 @@ function init() {
     center = new Center(innerWidth / 2, innerHeight / 2,);
 
     //création de la toupie du joueur
-    playerToupie = newRandomToupie(mouse.x, mouse.y);
+    playerToupie = newRandomToupie(mouse.x, mouse.y, GET['category']);
     toupies.push(playerToupie);
     //creation de la fleche de direction du joueur
     let directionArrow = new DirectionArrow(playerToupie, mouse.x, mouse.y);
