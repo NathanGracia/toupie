@@ -6,7 +6,7 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
-const velocityBeforeTail = 30;
+const velocityBeforeTail = 0;
 const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
 const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
 const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872'];
@@ -216,12 +216,27 @@ class Particle {
 
     draw() {
         c.beginPath()
+        c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
+        c.fillStyle = '#FFFFFFFF';
+
+        c.globalAlpha = this.alpha/3;
+        c.fill()
+        c.closePath()
+        c.beginPath()
+        c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
+        c.fillStyle = this.color;
+
+        c.globalAlpha = this.alpha/2;
+        c.fill()
+        c.closePath()
+        c.beginPath()
         c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
         c.fillStyle = this.color;
 
         c.globalAlpha = this.alpha;
         c.fill()
         c.closePath()
+
 
     }
 
@@ -280,7 +295,7 @@ draw() {
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
     c.fillStyle = '#FFFFFFFF';
 
-    c.globalAlpha = 0.4;
+    c.globalAlpha = 0.2;
     c.fill()
     c.closePath()
 
@@ -295,6 +310,13 @@ draw() {
     c.beginPath()
     c.arc(this.x, this.y, this.radius+4, 0, Math.PI * 2, false)
     c.fillStyle = '#FFFFFFFF';
+
+    c.globalAlpha = 0.05;
+    c.fill()
+    c.closePath()
+    c.beginPath()
+    c.arc(this.x, this.y, this.radius+4, 0, Math.PI * 2, false)
+    c.fillStyle = this.color;
 
     c.globalAlpha = 0.1;
     c.fill()
@@ -562,7 +584,7 @@ function CheckAllToupiesCollisions(toupies) {
             checkCollisionToupieCenter(toupie1, toupie1.center)
         }
         toupies.forEach(toupie2 => {
-            if (toupie1.id !== toupie2.id &&!toupie1.fulldead && !toupie2.fulldead) {
+            if (toupie1.id !== toupie2.id &&!toupie1.bursted && !toupie2.bursted) {
                 CheckTwoToupiesCollision(toupie1, toupie2);
             }
         })
@@ -638,6 +660,18 @@ function drawToupie(toupie) {
         c.strokeStyle = '#ff0000';
 
     }
+    c.lineWidth = 0;
+    c.beginPath();
+    c.arc(0, 0, toupie.radius+5, 0, Math.PI * 2, false);
+    c.fillStyle = '#FFFFFFFF';
+    c.globalAlpha = 0.05;
+    c.fill();
+    c.stroke();
+    c.closePath()
+
+
+
+
     c.lineWidth = 1;
     c.beginPath();
     c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
@@ -646,6 +680,8 @@ function drawToupie(toupie) {
     c.fill();
     c.stroke();
     c.closePath()
+
+
 
 
     //tracage des pics
