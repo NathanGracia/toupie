@@ -5,7 +5,7 @@ canvas.width = innerWidth;
 canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
-const debug = true;
+const debug = false;
 const velocityBeforeTail = 0;
 const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
 const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
@@ -78,6 +78,7 @@ class Toupie {
         this.velocity = velocity;
 
         this.life = life; // si les points vie tombe à 0, la toupie burst
+        this.initialLife = life; //utilisé pour la barre de vie
         this.center = center; // Centre du canvas, là où elles seront attirées
         this.mass = radius; // utilisé dans le calcul des collision Newton
         this.angle = 0; // Rotation de la toupie actuelle
@@ -87,6 +88,8 @@ class Toupie {
         this.bursted = false; // True lorsque la toupie n'a plus de point de vie
         this.alive = true; // False lorsqu'elle n'a plus de rotation. Alors il y a un speed malus et apres quelques frame elle passe en fulldead
         this.out = false // True lorsqu'elle est en dehors du stadium
+        this.initialRotation = rotation;
+        this.lifebar = new Lifebar(this);
 
         this.category = category;
 
@@ -96,6 +99,8 @@ class Toupie {
     draw() {
 
         drawToupie(this);
+        this.lifebar.draw();
+
 
         //Affiche du text au dessus de la souris (en debug)
         if(debug === true){
@@ -157,6 +162,8 @@ class Toupie {
         //cahngement de l'angle et de la rotation
         this.angle += 1;
         this.rotation *= friction_rotation * this.speed_malus;
+
+        this.lifebar.update();
 
         this.draw();
 
@@ -453,6 +460,52 @@ class DirectionArrow{
 
 
 }
+
+//lifebar
+class Lifebar {
+    constructor(toupie) {
+
+
+        this.width = toupie.radius*2.5;
+        this.color = toupie.color;
+        this.prctage = 1; // c pas des pourcent
+        this.toupie = toupie;
+        this.x = this.toupie.x - this.width/2;
+        this.y = this.toupie.y - this.toupie.radius - 20;
+
+
+    }
+
+    draw() {
+
+
+
+
+        //fill
+        c.beginPath();
+        c.rect(this.x, this.y, this.prctage * this.width  , 4);
+        c.fillStyle = this.toupie.color;
+        c.globalAlpha = 0.4;
+        c.lineWidth = 0;
+        c.fill();
+        c.closePath();
+
+
+
+    }
+
+    update() {
+        this.x = this.toupie.x - this.width/2;
+        this.y = this.toupie.y - this.toupie.radius - 10;
+
+        this.prctage = this.toupie.life / this.toupie.initialLife;
+
+        this.draw();
+    }
+
+
+}
+
 //######################################### Event listeners ###################################################
 // Traque la position de la souris
 addEventListener('mousemove', (event) => {
@@ -619,7 +672,7 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
         let damagesX = toupie1.velocity.x - toupie2.velocity.x;
         let damagesY = toupie1.velocity.y - toupie2.velocity.y;
-        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 1000;
+        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 500;
         if (damages> maxDamages){
             damages = maxDamages
         }
@@ -628,16 +681,17 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
         // donne un bonus à la toupie qui va le plus vite
         let sumVelocity1 = Math.abs(toupie1.velocity.x) + Math.abs(toupie1.velocity.y)
         let sumVelocity2 = Math.abs(toupie2.velocity.x) + Math.abs(toupie2.velocity.y)
-        let bonus1 = 1;
-        let bonus2 = 1;
+        let bonus = 2;
+
         if(sumVelocity1 > sumVelocity2){
-            bonus1 = 1.2;
+            toupie1.life -= damages;
+            toupie2.life -= damages * bonus;
         }else {
-            bonus2 = 1.2
+            toupie1.life -= damages * bonus;
+            toupie2.life -= damages;
         }
 
-        toupie1.life -= damages * bonus2;
-        toupie2.life -= damages * bonus1;
+
 
         //creation des particules en fonction des degats
         for (let i = 0; i < damages *10; i++) {
@@ -767,6 +821,7 @@ function ultraSlowToupie(toupie) {
 function bounceOnEdge(moovable) {
 
     if (moovable.x - moovable.radius < 0 || moovable.x + moovable.radius > innerWidth) {
+
         moovable.velocity.x *=-1.1 // pour eviter qu'elle se coince au bord à l'infinie
         moovable.rotation *= friction_edge;
 
@@ -776,6 +831,13 @@ function bounceOnEdge(moovable) {
     }
 
     if (moovable.y - moovable.radius < 0 || moovable.y + moovable.radius > innerHeight) {
+        if(moovable.y - moovable.radius < 0){
+            moovable.y =  moovable.radius;
+        }
+        if(moovable.y + moovable.radius  > innerHeight){
+            moovable.y = innerHeight -  moovable.radius;
+        }
+        console.log('bounce')
         moovable.velocity.y *=-1
         moovable.rotation *= friction_edge;
 
@@ -982,6 +1044,7 @@ function animate() {
             toupies.forEach(toupie => {
 
                 toupie.draw()
+                toupie.lifebar.update();
             });
             directionArrows.forEach((directionArrow=>{
                 directionArrow.update()
@@ -992,7 +1055,9 @@ function animate() {
         //positionnemnt de la toupie
         toupies.forEach(toupie => {
 
+
             toupie.draw()
+            toupie.lifebar.update();
         });
         playerToupie.x = mouse.x;
         playerToupie.y = mouse.y;
