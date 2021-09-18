@@ -6,9 +6,20 @@ canvas.height = innerHeight;
 
 // ######################################## Config generale ###########################################################
 const debug = true;
+const velocityBeforeTail = 30;
 const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
 const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
 const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872'];
+const gradient_color_out_arena = {
+    center : '#000000',
+    out: '#8f1717',
+    startGap: 1.1 // décale le debut du dégradé
+}
+const gradient_color_in_arena = {
+    center : '#09091c',
+    out: '#0d162c',
+    startGap: 1.1 // décale le debut du dégradé
+}
 const categories = ["defense", "attack", "stamina"];
 const defenseStats = {
     life: 150,
@@ -128,7 +139,13 @@ class Toupie {
             this.burst()
         }
         if(this.alive){
-            generateTailParticles(this);
+            // si la velocité additioné est assez grande, on fait une trainé
+            let sumVelocity = Math.abs(this.velocity.x) + Math.abs(this.velocity.y);
+            console.log(sumVelocity);
+            if(sumVelocity > velocityBeforeTail){
+                generateTailParticles(this);
+            }
+
 
         }
 
@@ -254,22 +271,30 @@ class TailParticle {
     this.baseRadius = 10;
     this.color = color;
     this.killed = false;
-    this.alpha = 0.2;
+    this.alpha = 0.5;
 
 }
 
 draw() {
     c.beginPath()
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.fillStyle = this.color;
+    c.fillStyle = '#FFFFFFFF';
 
-    c.globalAlpha = this.alpha;
+    c.globalAlpha = 0.4;
     c.fill()
     c.closePath()
 
     c.beginPath()
-    c.arc(this.x, this.y, this.radius+1, 0, Math.PI * 2, false)
-    c.fillStyle = "#ffffff";
+    c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
+    c.fillStyle = this.color;
+
+    c.globalAlpha = 0.3;
+    c.fill()
+    c.closePath()
+
+    c.beginPath()
+    c.arc(this.x, this.y, this.radius+4, 0, Math.PI * 2, false)
+    c.fillStyle = '#FFFFFFFF';
 
     c.globalAlpha = 0.1;
     c.fill()
@@ -306,9 +331,9 @@ class Center {
         }
         this.life = 999999999;
 
-        var gradient = c.createRadialGradient(X, Y, 0, X, Y, 800);
-        gradient.addColorStop(0, '#4d4d4d');
-        gradient.addColorStop(1, '#707070');
+        var gradient = c.createRadialGradient(X, Y, 0, X, Y, this.radius*gradient_color_in_arena.startGap);
+        gradient.addColorStop(0, gradient_color_in_arena.center);
+        gradient.addColorStop(1, gradient_color_in_arena.out);
         this.color = gradient
 
     }
@@ -336,9 +361,9 @@ class BackGround{
         this.x = center.x;
         this.y = center.y;
         this.radius = 1200;
-        var gradient = c.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-        gradient.addColorStop(0, '#5b0f0f');
-        gradient.addColorStop(1, '#8f1717');
+        var gradient = c.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius**gradient_color_out_arena.startGap);
+        gradient.addColorStop(0, gradient_color_out_arena.center);
+        gradient.addColorStop(1, gradient_color_out_arena.out);
         this.color = gradient
     }
     draw() {
