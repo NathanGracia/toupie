@@ -7,9 +7,9 @@ canvas.height = innerHeight;
 // ######################################## Config generale ###########################################################
 const debug = false;
 const velocityBeforeTail = 0;
-const color_attack = ['#8e1740', '#910b0b', '#b34715', '#9d1010'];
-const color_stamina = ['#7abd15', '#1ea010', '#10a731', '#0d7126'];
-const color_defense = ['#1a396d', '#193969', '#28156a', '#2d0872'];
+const color_attack = ['#001189', '#7bf8f9', '#1d17c6', '#1b029c'];
+const color_stamina = ['#f3d617', '#ed7f10', '#ffcb60', '#fea347'];
+const color_defense = ['#87e990', '#00ff00', '#3a9d23', '#586f2d'];
 const gradient_color_out_arena = {
     center : '#000000',
     out: '#8f1717',
