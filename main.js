@@ -672,8 +672,8 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
         let damagesX = toupie1.velocity.x - toupie2.velocity.x;
         let damagesY = toupie1.velocity.y - toupie2.velocity.y;
-        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 500;
-        if (damages> maxDamages){
+        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 500; // equation degats
+        if (damages> maxDamages){ // cap les degats
             damages = maxDamages
         }
 
@@ -733,7 +733,7 @@ function drawToupie(toupie) {
         c.strokeStyle = '#000000';
 
     }else {
-        c.strokeStyle = '#ff0000';
+        c.strokeStyle = '#000000';
 
     }
 
@@ -766,7 +766,7 @@ function drawToupie(toupie) {
 
 
     }else {
-        c.strokeStyle = '#6e0c0c';
+        c.strokeStyle = '#000000';
 
     }
     c.stroke();
