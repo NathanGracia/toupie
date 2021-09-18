@@ -225,10 +225,10 @@ class Particle {
 
     draw() {
         c.beginPath()
-        c.arc(this.x, this.y, this.radius+2, 0, Math.PI * 2, false)
+        c.arc(this.x, this.y, this.radius+1, 0, Math.PI * 2, false)
         c.fillStyle = '#FFFFFFFF';
 
-        c.globalAlpha = this.alpha/5;
+        c.globalAlpha = this.alpha/7;
         c.fill()
         c.closePath()
         c.beginPath()
@@ -265,7 +265,7 @@ class Particle {
 
         //disparait petit à petit
         if (this.radius > this.baseRadius/3){
-            this.radius -= 0.01
+            this.radius *=0.992
         }
 
         if(checkIfIsOutOfCircle(this, this.center)){
