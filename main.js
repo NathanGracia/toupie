@@ -39,6 +39,8 @@ const mouse = {
     y: innerHeight / 2
 };
 
+const maxStartSpeed = 100;
+
 // get query arguments
 let GET = getArgfromUrl()
 
@@ -267,7 +269,7 @@ class Particle {
             }
 
         }
-   
+
 
 
 
@@ -419,8 +421,31 @@ class DirectionArrow{
         this.tox = mouse.x;
         this.toy = mouse.y;
         //update egalement la velocité de la toupie
+
         let diffX = this.tox-this.x;
         let diffY = this.toy-this.y;
+
+
+        if (diffX > maxStartSpeed){
+
+            diffX  = maxStartSpeed
+        }
+        if (diffX < -maxStartSpeed){
+
+            diffX  = -maxStartSpeed
+
+        }
+        if (diffY > maxStartSpeed){
+
+            diffY  = maxStartSpeed
+
+        }
+        if (diffY < -maxStartSpeed){
+
+            diffY  = -maxStartSpeed
+
+        }
+        console.log(diffY);
         this.toupie.velocity.x = diffX/10;
         this.toupie.velocity.y = diffY/10;
         this.draw();
