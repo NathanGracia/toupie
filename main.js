@@ -40,7 +40,7 @@ const mouse = {
 };
 
 const maxStartSpeed = 100;
-
+const maxDamages = 20;
 // get query arguments
 let GET = getArgfromUrl()
 
@@ -445,7 +445,7 @@ class DirectionArrow{
             diffY  = -maxStartSpeed
 
         }
-        console.log(diffY);
+
         this.toupie.velocity.x = diffX/10;
         this.toupie.velocity.y = diffY/10;
         this.draw();
@@ -558,8 +558,8 @@ function resolveCollision(particle, otherParticle) {
 
         //Add rotation bonus when they contact
         if(particle.alice || otherParticle.alive){
-            vFinal1.x *= 3;
-            vFinal1.y *= 3;
+            vFinal1.x *= 2;
+            vFinal1.y *= 2;
         }
 
         // Swap particle velocities for realistic bounce effect
@@ -619,7 +619,11 @@ function CheckTwoToupiesCollision(toupie1, toupie2) {
 
         let damagesX = toupie1.velocity.x - toupie2.velocity.x;
         let damagesY = toupie1.velocity.y - toupie2.velocity.y;
-        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 10000;
+        let damages = Math.pow(Math.abs(damagesX) + Math.abs(damagesY), 3) / 1000;
+        if (damages> maxDamages){
+            damages = maxDamages
+        }
+
 
         // donne un bonus à la toupie qui va le plus vite
         let sumVelocity1 = Math.abs(toupie1.velocity.x) + Math.abs(toupie1.velocity.y)
