@@ -822,7 +822,7 @@ function bounceOnEdge(moovable) {
 
     if (moovable.x - moovable.radius < 0 || moovable.x + moovable.radius > innerWidth) {
 
-        moovable.velocity.x *=-1.1 // pour eviter qu'elle se coince au bord à l'infinie
+        moovable.velocity.x *=-1 // pour eviter qu'elle se coince au bord à l'infinie
         moovable.rotation *= friction_edge;
 
         let damagesX = moovable.velocity.x
@@ -832,7 +832,7 @@ function bounceOnEdge(moovable) {
 
     if (moovable.y - moovable.radius < 0 || moovable.y + moovable.radius > innerHeight) {
         if(moovable.y - moovable.radius < 0){
-            moovable.y =  moovable.radius;
+            moovable.y =  moovable.radius+1;
         }
         if(moovable.y + moovable.radius  > innerHeight){
             moovable.y = innerHeight -  moovable.radius;

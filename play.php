@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="flavicon.png" />
 
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
     <meta charset="UTF-8" />
     <title>Super toupie</title>
     <style>
