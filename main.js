@@ -821,7 +821,12 @@ function ultraSlowToupie(toupie) {
 function bounceOnEdge(moovable) {
 
     if (moovable.x - moovable.radius < 0 || moovable.x + moovable.radius > innerWidth) {
-
+        if(moovable.x - moovable.radius < 0){
+            moovable.x =  moovable.radius+1;
+        }
+        if(moovable.x + moovable.radius  > innerWidth){
+            moovable.x = innerWidth -  moovable.radius -1;
+        }
         moovable.velocity.x *=-1 // pour eviter qu'elle se coince au bord à l'infinie
         moovable.rotation *= friction_edge;
 
@@ -835,7 +840,7 @@ function bounceOnEdge(moovable) {
             moovable.y =  moovable.radius+1;
         }
         if(moovable.y + moovable.radius  > innerHeight){
-            moovable.y = innerHeight -  moovable.radius;
+            moovable.y = innerHeight -  moovable.radius -1;
         }
         console.log('bounce')
         moovable.velocity.y *=-1
