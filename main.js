@@ -661,7 +661,7 @@ function drawToupie(toupie) {
     c.arc(0, 0, toupie.radius, 0, Math.PI * 2, false);
     c.fillStyle = toupie.color;
     c.shadowColor = toupie.color;
-    c.shadowBlur = 15;
+    c.shadowBlur = 7;
     c.globalAlpha = 1;
     c.fill();
     c.stroke();
